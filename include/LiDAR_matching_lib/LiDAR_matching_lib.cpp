@@ -29,7 +29,7 @@ void LiDAR_matching_lib::process() {
         curr_pose = T_map;// todo predict the cloud map pose// <<later us imu!!!!>>
         //1.1
         std::vector<int> indices_unique;
-        for (int i = 0; i < vlp_pcd.size(); i = i + 3) {
+        for (int i = 0; i < vlp_pcd.size(); i = i + 1) {
             if(sqrt(vlp_pcd[i].x*vlp_pcd[i].x + vlp_pcd[i].y*vlp_pcd[i].y +vlp_pcd[i].z*vlp_pcd[i].z)<50){
        /*         std::vector<int> indices; // 存储查询近邻点索引
 

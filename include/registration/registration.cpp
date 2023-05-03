@@ -37,8 +37,8 @@ void registration::addNormal(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
 void registration::SetNormalICP() {
 	pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>::Ptr icp(
 			new pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>());
-	icp->setMaximumIterations(50);
-	icp->setMaxCorrespondenceDistance(10);
+	icp->setMaximumIterations(30);
+	icp->setMaxCorrespondenceDistance(3);
 	icp->setTransformationEpsilon(0.001);
 	icp->setEuclideanFitnessEpsilon(0.001);
 	this->pcl_plane_plane_icp = icp;

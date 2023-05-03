@@ -32,10 +32,9 @@ int main(int argc, char** argv){
         LM.T_map.setIdentity();
         Eigen::Quaterniond q;
         //start
-      /*  q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
-        LM.T_map.rotate(q.matrix()) ;
-        LM.T_map.translation()<<0,0,0;
-*/
+//        q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
+//        LM.T_map.rotate(q.matrix()) ;
+//        LM.T_map.translation()<<0,0,0;
         q.x() = 0.0108444616199; q.y() = -0.12032815069; q.z() = -0.151517733932; q.w() =0.981043279171;
         LM.T_map.rotate(q.matrix()) ;
         LM.T_map.translation()<<271.907041259,427.126210513,0;
