@@ -14,13 +14,13 @@ void PointCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 }
 void InitPoseCallback(const nav_msgs::Odometry::ConstPtr& msg){
     LM.T_map.translation()<<0,0,0;
-    LM.InitPose = *msg;
+//    LM.InitPose = *msg;
 }
 int main(int argc, char** argv){
     bool debug = true;
     ros::init(argc, argv, "LiDAR_matching");
     ros::NodeHandle nh("~");
-    LM.LoadMap("/home/echo/bag/7720_Lidar/map/output.pcd");
+    LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth.pcd");
     ROS_WARN("Map Finish");
     ros::Subscriber sub1 = nh.subscribe("/imu/data_raw", 1000, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 1000, PointCallback);
@@ -31,19 +31,28 @@ int main(int argc, char** argv){
     if(debug){
         LM.T_map.setIdentity();
         Eigen::Quaterniond q;
-        q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
+        //start
+      /*  q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
         LM.T_map.rotate(q.matrix()) ;
         LM.T_map.translation()<<0,0,0;
+*/
+        q.x() = 0.091342523694; q.y() = -0.0772627964616; q.z() = 0.601488053799; q.w() = 0.789872825146;
+        LM.T_map.rotate(q.matrix()) ;
+        LM.T_map.translation()<<77.4968564942,198.2058556,0;
+
         LM.InitPoseBool = true;
     }
 
     ros::Rate r(10);
     while(ros::ok()){
         ros::spinOnce();
-        LM.process();
-        //map_pub.publish(LM.mls_map);
-        LiDAR_pub.publish(LM.LiDAR_Distort);
-        Local_map_pub.publish(LM.LocalMapPC2);
+        if(LM.newLiDAR){
+            LM.process();
+            //map_pub.publish(LM.mls_map);
+            LiDAR_pub.publish(LM.LiDAR_Distort);
+            Local_map_pub.publish(LM.LocalMapPC2);
+            LM.newLiDAR = false;
+        }
         r.sleep();
     }
 }

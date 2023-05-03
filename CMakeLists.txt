@@ -11,15 +11,23 @@ find_package(catkin REQUIRED COMPONENTS
         std_msgs
         pcl_conversions
 )
-
 catkin_package(
-
 )
 
 include_directories(
         include
   ${catkin_INCLUDE_DIRS}
 )
-add_executable(LiDAR_matching src/LiDAR_matching.cpp include/LiDAR_matching_lib/LiDAR_matching_lib.h include/LiDAR_matching_lib/LiDAR_matching_lib.cpp include/pointType/pointTypes.h)
+
+add_library(registration
+        include/registration/registration.cpp
+        include/registration/registration.h
+        include/pointType/pointTypes.h
+        )
+target_link_libraries(registration
+        ${PCL_LIBRARIES})
+
+add_executable(LiDAR_matching src/LiDAR_matching.cpp include/LiDAR_matching_lib/LiDAR_matching_lib.h
+        include/LiDAR_matching_lib/LiDAR_matching_lib.cpp include/pointType/pointTypes.h)
 add_dependencies(LiDAR_matching ${catkin_EXPORTED_TARGETS}  )
-target_link_libraries(LiDAR_matching ${catkin_LIBRARIES}   ${PCL_LIBRARIES})
+target_link_libraries(LiDAR_matching ${catkin_LIBRARIES}   registration ${PCL_LIBRARIES})

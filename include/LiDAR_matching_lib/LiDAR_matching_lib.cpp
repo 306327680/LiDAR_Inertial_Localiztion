@@ -5,35 +5,60 @@
 #include "LiDAR_matching_lib.h"
 
 void LiDAR_matching_lib::process() {
+    if(InitPoseBool){
+        icp.transformation  = T_map.matrix().cast<float>();
+        InitPoseBool = false;
+        InitPoseCome = true;
+    }
     LocalMap.clear();
-    pcl::PointCloud<VLPPoint> vlp_pcd_tmp;
+    pcl::PointCloud<VLPPoint> vlp_pcd_ds;
     pcl::PCLPointCloud2 pcl_frame;
-    vlp_pcd_tmp.clear();
+    vlp_pcd_ds.clear();
     // 1.Down sample point
     // todo 1.1 Distortion
     // todo 1.2 Transfer to Map frame
     // 2.Get Local Map
     // Todo: 3.Point to Plane ICP
     // 4.
-    if(InitPoseBool && newIMU && newLiDAR){
+
+    if(InitPoseCome && newIMU && newLiDAR){
         FrameTime = Point_raw.header.stamp.toSec();
         pcl::PCLPointCloud2 pcl_pc2;
         pcl::fromROSMsg(Point_raw,vlp_pcd);
-        ImuDistortion(vlp_pcd.front().time,vlp_pcd.back().time); //todo finish later
-        for (int i = 0; i < vlp_pcd.size(); i = i + 81) {
-            vlp_pcd_tmp.push_back(vlp_pcd[i]);
+        Eigen::Affine3d curr_pose;
+        curr_pose = icp.transformation.matrix().cast<double>()*icp.increase.matrix().cast<double>();// todo predict the cloud map pose// <<later us imu!!!!>>
+        //1.1
+
+        std::vector<int> indices_unique;
+        for (int i = 0; i < vlp_pcd.size(); i = i + 17) {
+            std::vector<int> indices; // 存储查询近邻点索引
+            vlp_pcd_ds.push_back(vlp_pcd[i]);
+            Eigen::Vector3d point;
+            point = Eigen::Vector3d(vlp_pcd[i].x,vlp_pcd[i].y,vlp_pcd[i].z);
+            point =  curr_pose.rotation()*point + curr_pose.translation();
             pcl::PointNormal temp;
-            temp.x = vlp_pcd[i].x;
-            temp.y = vlp_pcd[i].y;
-            temp.z = vlp_pcd[i].z;
-            kdtree->nearestKSearch(temp, 10, indices, distances);
+            temp.x = point.x();
+            temp.y = point.y();
+            temp.z = point.z();
+            kdtree->radiusSearch(temp, 10, indices, distances);
             for (int j = 0; j < indices.size(); ++j) {
-                LocalMap.push_back(mls_points[indices[j]]);
+                indices_unique.push_back(indices[j]);
             }
         }
-        pcl::toPCLPointCloud2(vlp_pcd_tmp, pcl_frame);
+        std::sort(indices_unique.begin(),indices_unique.end());
+        indices_unique.erase(std::unique(indices_unique.begin(),indices_unique.end()),indices_unique.end());
+        for (int j = 0; j < indices_unique.size(); ++j) {
+            LocalMap.push_back(mls_points[indices_unique[j]]);
+        }
+
+        ImuDistortion(vlp_pcd.front().time,vlp_pcd.back().time); //todo finish later <<<<vlp_pcd_ds>>>
+        //3. ICP
+        registrion(vlp_pcd_ds,LocalMap);
+        //4.pub
+        pcl::toPCLPointCloud2(Transfer_local_point, pcl_frame);
         pcl_conversions::fromPCL(pcl_frame, LiDAR_Distort);
         LiDAR_Distort.header = Point_raw.header;
+        LiDAR_Distort.header.frame_id = "/map";
 
         pcl::toPCLPointCloud2(LocalMap,pcl_frame);
         pcl_conversions::fromPCL(pcl_frame, LocalMapPC2);
@@ -41,7 +66,22 @@ void LiDAR_matching_lib::process() {
         LocalMapPC2.header.frame_id = "/map";
     }
 }
+void LiDAR_matching_lib::LoadNormalMap(std::string map_path) {
+    kdtree.reset(new pcl::search::KdTree<pcl::PointNormal>());
 
+    pcl::PCLPointCloud2 pcl_frame;
+    pcl::PointCloud<pcl::PointNormal>::Ptr mls_ptr(new pcl::PointCloud<pcl::PointNormal>);
+    pcl::io::loadPCDFile (map_path, mls_points);
+
+    pcl::toPCLPointCloud2(mls_points, pcl_frame);
+    pcl_conversions::fromPCL(pcl_frame, mls_map);
+    mls_map.header.stamp = ros::Time::now();
+    mls_map.header.frame_id = "map";
+    *mls_ptr = mls_points;
+    kdtree->setInputCloud(mls_ptr);
+    T_map.setIdentity();
+    icp.SetNormalICP();
+}
 void LiDAR_matching_lib::LoadMap(std::string map_path) {
     kdtree.reset(new pcl::search::KdTree<pcl::PointNormal>());
 
@@ -65,6 +105,7 @@ void LiDAR_matching_lib::LoadMap(std::string map_path) {
     *mls_ptr = mls_points;
     kdtree->setInputCloud(mls_ptr);
     T_map.setIdentity();
+    icp.SetNormalICP();
 }
 //todo later
 void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point_time) {
@@ -80,3 +121,13 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
     }
     //std::cerr<<FrameTime<<" ImuQueue.size(): "<<ImuQueue.size()<<" sync_imu: "<<sync_imu.size()<<std::endl;
 }
+
+void LiDAR_matching_lib::registrion(pcl::PointCloud<VLPPoint> source,
+                                    pcl::PointCloud<pcl::PointNormal> target) {
+
+    pcl::PointCloud<VLPPoint>::Ptr temp(new pcl::PointCloud<VLPPoint>);
+    *temp = source;
+    Transfer_local_point = icp.normalIcpRegistration(temp,target);
+}
+
+

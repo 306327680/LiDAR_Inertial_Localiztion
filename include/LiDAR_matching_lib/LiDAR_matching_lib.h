@@ -15,18 +15,20 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <X11/Xlib.h>
 #include <pcl/search/kdtree.h>
 #include "pointType/pointTypes.h"
+#include <registration/registration.h>
 class LiDAR_matching_lib {
 public:
     LiDAR_matching_lib(){};
     void LoadMap(std::string map_path);
+    void LoadNormalMap(std::string map_path);
     void process();
     //1.Input
     sensor_msgs::PointCloud2 Point_raw;
 
     bool InitPoseBool = false;
+    bool InitPoseCome = false;
     bool newIMU = false;
     bool newLiDAR = false;
     std::queue<sensor_msgs::Imu> ImuQueue;
@@ -42,12 +44,16 @@ public:
 
 private:
     void ImuDistortion(double first_point_time,double last_point_time);
+    void registrion(pcl::PointCloud<VLPPoint> source,
+                    pcl::PointCloud<pcl::PointNormal> target);
     pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree;
     pcl::PointCloud<VLPPoint> vlp_pcd;
-    std::vector<int> indices; // 存储查询近邻点索引
+
+
     std::vector<float> distances; // 存储近邻点对应距离的平方
     double FrameTime =0;
-
+    registration icp;
+    pcl::PointCloud<pcl::PointXYZI> Transfer_local_point;
 };
 
 
