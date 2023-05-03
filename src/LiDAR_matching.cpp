@@ -36,9 +36,9 @@ int main(int argc, char** argv){
         LM.T_map.rotate(q.matrix()) ;
         LM.T_map.translation()<<0,0,0;
 */
-        q.x() = 0.091342523694; q.y() = -0.0772627964616; q.z() = 0.601488053799; q.w() = 0.789872825146;
+        q.x() = 0.0108444616199; q.y() = -0.12032815069; q.z() = -0.151517733932; q.w() =0.981043279171;
         LM.T_map.rotate(q.matrix()) ;
-        LM.T_map.translation()<<77.4968564942,198.2058556,0;
+        LM.T_map.translation()<<271.907041259,427.126210513,0;
 
         LM.InitPoseBool = true;
     }

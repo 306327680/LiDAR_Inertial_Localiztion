@@ -26,27 +26,41 @@ void LiDAR_matching_lib::process() {
         pcl::PCLPointCloud2 pcl_pc2;
         pcl::fromROSMsg(Point_raw,vlp_pcd);
         Eigen::Affine3d curr_pose;
-        curr_pose = icp.transformation.matrix().cast<double>()*icp.increase.matrix().cast<double>();// todo predict the cloud map pose// <<later us imu!!!!>>
+        curr_pose = T_map;// todo predict the cloud map pose// <<later us imu!!!!>>
         //1.1
-
         std::vector<int> indices_unique;
-        for (int i = 0; i < vlp_pcd.size(); i = i + 17) {
-            std::vector<int> indices; // 存储查询近邻点索引
-            vlp_pcd_ds.push_back(vlp_pcd[i]);
-            Eigen::Vector3d point;
-            point = Eigen::Vector3d(vlp_pcd[i].x,vlp_pcd[i].y,vlp_pcd[i].z);
-            point =  curr_pose.rotation()*point + curr_pose.translation();
-            pcl::PointNormal temp;
-            temp.x = point.x();
-            temp.y = point.y();
-            temp.z = point.z();
-            kdtree->radiusSearch(temp, 10, indices, distances);
-            for (int j = 0; j < indices.size(); ++j) {
-                indices_unique.push_back(indices[j]);
+        for (int i = 0; i < vlp_pcd.size(); i = i + 3) {
+            if(sqrt(vlp_pcd[i].x*vlp_pcd[i].x + vlp_pcd[i].y*vlp_pcd[i].y +vlp_pcd[i].z*vlp_pcd[i].z)<50){
+       /*         std::vector<int> indices; // 存储查询近邻点索引
+
+                Eigen::Vector3d point;
+                point = Eigen::Vector3d(vlp_pcd[i].x,vlp_pcd[i].y,vlp_pcd[i].z);
+                point =  curr_pose.rotation()*point + curr_pose.translation();
+                pcl::PointNormal temp;
+                temp.x = point.x();
+                temp.y = point.y();
+                temp.z = point.z();
+                kdtree->radiusSearch(temp, 5, indices, distances);
+                for (int j = 0; j < indices.size(); ++j) {
+                    indices_unique.push_back(indices[j]);
+                }*/
+                vlp_pcd_ds.push_back(vlp_pcd[i]);
             }
         }
+        //todo local map test
+        std::vector<int> indices; // 存储查询近邻点索引
+        Eigen::Vector3d point;
+        point = Eigen::Vector3d(T_map.translation().x(),T_map.translation().y(),T_map.translation().z());
+
+        pcl::PointNormal temp;
+        temp.x = point.x();
+        temp.y = point.y();
+        temp.z = point.z();
+        kdtree->radiusSearch(temp, 50, indices_unique, distances);
+
         std::sort(indices_unique.begin(),indices_unique.end());
         indices_unique.erase(std::unique(indices_unique.begin(),indices_unique.end()),indices_unique.end());
+
         for (int j = 0; j < indices_unique.size(); ++j) {
             LocalMap.push_back(mls_points[indices_unique[j]]);
         }
@@ -126,8 +140,15 @@ void LiDAR_matching_lib::registrion(pcl::PointCloud<VLPPoint> source,
                                     pcl::PointCloud<pcl::PointNormal> target) {
 
     pcl::PointCloud<VLPPoint>::Ptr temp(new pcl::PointCloud<VLPPoint>);
+    pcl::PointCloud<pcl::PointNormal> map_T_last;
+    pcl::PointCloud<pcl::PointXYZI> local_map;
     *temp = source;
-    Transfer_local_point = icp.normalIcpRegistration(temp,target);
+    pcl::transformPointCloud(target, map_T_last, T_map.matrix().inverse().cast<float>());
+    icp.transformation = Eigen::Matrix4f::Identity();
+    Transfer_local_point = icp.normalIcpRegistration(temp,map_T_last);
+    T_map = T_map.matrix() * icp.pcl_plane_plane_icp->getFinalTransformation().cast<double>();
+    pcl::transformPointCloud(Transfer_local_point, local_map, T_map.matrix().cast<float>());
+    Transfer_local_point = local_map;
 }
 
 

@@ -41,7 +41,6 @@ public:
     pcl::PointCloud<pcl::PointNormal> mls_points;
     Eigen::Affine3d T_map;
 
-
 private:
     void ImuDistortion(double first_point_time,double last_point_time);
     void registrion(pcl::PointCloud<VLPPoint> source,

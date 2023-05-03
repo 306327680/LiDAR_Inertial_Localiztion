@@ -38,9 +38,9 @@ void registration::SetNormalICP() {
 	pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>::Ptr icp(
 			new pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>());
 	icp->setMaximumIterations(50);
-	icp->setMaxCorrespondenceDistance(1);
-	icp->setTransformationEpsilon(0.0001);
-	icp->setEuclideanFitnessEpsilon(0.0001);
+	icp->setMaxCorrespondenceDistance(10);
+	icp->setTransformationEpsilon(0.001);
+	icp->setEuclideanFitnessEpsilon(0.001);
 	this->pcl_plane_plane_icp = icp;
 	
 }
@@ -256,25 +256,25 @@ pcl::PointCloud<pcl::PointXYZI> registration::normalIcpRegistration(pcl::PointCl
 
 	local_map_with_normal = *cloud_target_normals;
 
-	*cloud_source_normals_temp = *cloud_target_normals;
-	//0. 上次位姿态*增量
-	icp_init_local = transformation;//global
-	//去除累计误差
-	icp_init_local = ReOrthogonalization(Eigen::Isometry3d(icp_init_local.matrix().cast<double>())).matrix().cast<float>();
-	//1.转换点云 给一个初值
-	pcl::transformPointCloud(*cloud_source_normals_temp, *cloud_target_normals, icp_init_local.matrix().inverse());
+    *cloud_source_normals_temp = *cloud_source_normals;
+    //0. 当前预测量 = 上次位姿态*增量
+    icp_init = transformation ;
 
-	pcl_plane_plane_icp->setInputSource(cloud_source_normals);
-	pcl_plane_plane_icp->setInputTarget(cloud_target_normals);
-	pcl_plane_plane_icp->align(*cloud_source_normals);
+    //去除累计误差
+    icp_init = ReOrthogonalization(Eigen::Isometry3d(icp_init.matrix().cast<double>())).matrix().cast<float>();
+    //1.转换点云 给一个初值
+    pcl::transformPointCloud(*cloud_source_normals_temp, *cloud_source_normals, icp_init.matrix());
 
-	//2.当前的transform 全局准确
-	increase = pcl_plane_plane_icp->getFinalTransformation();
-    std::cout<<"inverse  "<<pcl_plane_plane_icp->getFinalTransformation()*icp_init_local <<std::endl;
-	transformation_local = icp_init_local * pcl_plane_plane_icp->getFinalTransformation(); //上次结果(结果加预测)
-	transformation = transformation_local;
-    std::cout<<"pcl_plane_plane_icp->getFinalTransformation()  "<<pcl_plane_plane_icp->getFinalTransformation().matrix()<<std::endl;
-    std::cout<<"transformation  "<<transformation.matrix()<<std::endl;
+    pcl_plane_plane_icp->setInputSource(cloud_source_normals);
+    pcl_plane_plane_icp->setInputTarget(cloud_target_normals);
+    pcl_plane_plane_icp->align(*cloud_source_normals);
+    //2.当前的transform 全局准确
+    transformation = icp_init * pcl_plane_plane_icp->getFinalTransformation();//上次结果(结果加预测)
+    //计算不带increase的increase 1上次位姿 * 预测 * 预测的调整 是错的 应该是 :
+    //实际增量 = 上次增量* icp算出的增量误差
+    //上面那个也不对
+    //increase = transformation * increase * pcl_plane_plane_icp->getFinalTransformation();
+    increase = increase * pcl_plane_plane_icp->getFinalTransformation();
 	pcl::transformPointCloud(*source1, tfed, transformation.matrix());
 	//变化量
 	return tfed;
