@@ -7,6 +7,7 @@
 
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <tf/transform_broadcaster.h>
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/PointCloud2.h"

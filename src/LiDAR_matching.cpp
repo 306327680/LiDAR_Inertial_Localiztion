@@ -12,9 +12,14 @@ void PointCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
     LM.Point_raw = *msg;
     LM.newLiDAR = true;
 }
-void InitPoseCallback(const nav_msgs::Odometry::ConstPtr& msg){
-    LM.T_map.translation()<<0,0,0;
-//    LM.InitPose = *msg;
+void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg){
+    LM.T_map.setIdentity();
+    Eigen::Quaterniond q;
+    q.x() = msg->pose.pose.orientation.x; q.y() = msg->pose.pose.orientation.y;
+    q.z() = msg->pose.pose.orientation.z; q.w() =msg->pose.pose.orientation.w;
+    LM.T_map.rotate(q.matrix()) ;
+    LM.T_map.translation()<<msg->pose.pose.position.x,msg->pose.pose.position.y,0;
+    LM.InitPoseBool = true;
 }
 int main(int argc, char** argv){
     bool debug = true;
@@ -24,7 +29,7 @@ int main(int argc, char** argv){
     ROS_WARN("Map Finish");
     ros::Subscriber sub1 = nh.subscribe("/imu/data_raw", 1000, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 1000, PointCallback);
-    ros::Subscriber sub3 = nh.subscribe("/init_position", 1000, InitPoseCallback);
+    ros::Subscriber sub3 = nh.subscribe("/initialpose", 1000, InitPoseCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1000);
     ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_Distortion", 1000);
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1000);
@@ -38,7 +43,6 @@ int main(int argc, char** argv){
         q.x() = 0.0108444616199; q.y() = -0.12032815069; q.z() = -0.151517733932; q.w() =0.981043279171;
         LM.T_map.rotate(q.matrix()) ;
         LM.T_map.translation()<<271.907041259,427.126210513,0;
-
         LM.InitPoseBool = true;
     }
 

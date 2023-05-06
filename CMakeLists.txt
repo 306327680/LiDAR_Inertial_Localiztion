@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
         rospy
         std_msgs
         pcl_conversions
+        geometry_msgs
 )
 catkin_package(
 )
