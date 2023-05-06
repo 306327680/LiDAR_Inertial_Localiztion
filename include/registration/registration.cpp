@@ -85,16 +85,17 @@ pcl::PointCloud<pcl::PointXYZI> registration::normalIcpRegistration(pcl::PointCl
 	local_map_with_normal = *cloud_target_normals;
     *cloud_source_normals_temp = *cloud_source_normals;
     //0. 当前预测量 = 上次位姿态*增量
-    icp_init = transformation ;
-    icp_init = ReOrthogonalization(Eigen::Isometry3d(icp_init.matrix().cast<double>())).matrix().cast<float>();
+//    icp_init = transformation ;
+//    icp_init = ReOrthogonalization(Eigen::Isometry3d(icp_init.matrix().cast<double>())).matrix().cast<float>();
     //1.转换点云 给一个初值
-    pcl::transformPointCloud(*cloud_source_normals_temp, *cloud_source_normals, icp_init.matrix());
-
+//    pcl::transformPointCloud(*cloud_source_normals_temp, *cloud_source_normals, icp_init.matrix());
+    *cloud_source_normals = *cloud_source_normals_temp;
     pcl_plane_plane_icp->setInputSource(cloud_source_normals);
     pcl_plane_plane_icp->setInputTarget(cloud_target_normals);
     pcl_plane_plane_icp->align(*cloud_source_normals);
 
-    transformation = icp_init * pcl_plane_plane_icp->getFinalTransformation();//上次结果(结果加预测)
+    transformation =  pcl_plane_plane_icp->getFinalTransformation();//上次结果(结果加预测)
+//    transformation = icp_init * pcl_plane_plane_icp->getFinalTransformation();//上次结果(结果加预测)
     increase = increase * pcl_plane_plane_icp->getFinalTransformation();
 	pcl::transformPointCloud(*source, tfed, transformation.matrix());
 	return tfed;
