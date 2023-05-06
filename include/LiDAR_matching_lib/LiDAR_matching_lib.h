@@ -20,6 +20,7 @@
 #include <pcl/search/kdtree.h>
 #include "pointType/pointTypes.h"
 #include <registration/registration.h>
+#include <pcl/filters/voxel_grid.h>
 class LiDAR_matching_lib {
 public:
     LiDAR_matching_lib(){};
@@ -45,12 +46,12 @@ public:
 
 private:
     void ImuDistortion(double first_point_time,double last_point_time);
-    void registrion(pcl::PointCloud<VLPPoint> source,
+    void registrion(pcl::PointCloud<pcl::PointXYZI> source,
                     pcl::PointCloud<pcl::PointNormal> target);
     pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree;
     pcl::PointCloud<VLPPoint> vlp_pcd;
-
-
+    pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;
+    pcl::VoxelGrid<pcl::PointXYZI> sor;
     std::vector<float> distances; // 存储近邻点对应距离的平方
     double FrameTime =0;
     registration icp;

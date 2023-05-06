@@ -25,7 +25,7 @@ int main(int argc, char** argv){
     bool debug = true;
     ros::init(argc, argv, "LiDAR_matching");
     ros::NodeHandle nh("~");
-    LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth.pcd");
+    LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth_ds.pcd");
     ROS_WARN("Map Finish");
     ros::Subscriber sub1 = nh.subscribe("/imu/data_raw", 1000, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 1000, PointCallback);
@@ -33,6 +33,7 @@ int main(int argc, char** argv){
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1000);
     ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_Distortion", 1000);
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1000);
+    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_position", 1000);
     if(debug){
         LM.T_map.setIdentity();
         Eigen::Quaterniond q;

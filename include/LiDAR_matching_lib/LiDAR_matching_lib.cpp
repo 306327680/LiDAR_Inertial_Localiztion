@@ -5,12 +5,16 @@
 #include "LiDAR_matching_lib.h"
 
 void LiDAR_matching_lib::process() {
+    ros::Time processTime;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr vlp_pcd_ds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+    LocalMap.clear();
+    vlp_pcd_ds_ptr->clear();
     if(InitPoseBool){
         icp.transformation  = T_map.matrix().cast<float>();
         InitPoseBool = false;
         InitPoseCome = true;
     }
-    LocalMap.clear();
+
     pcl::PointCloud<VLPPoint> vlp_pcd_ds;
     pcl::PCLPointCloud2 pcl_frame;
     vlp_pcd_ds.clear();
@@ -29,45 +33,62 @@ void LiDAR_matching_lib::process() {
         curr_pose = T_map;// todo predict the cloud map pose// <<later us imu!!!!>>
         //1.1 2
         std::vector<int> indices_unique;
+        vlp_ds_pcd.clear();
+        processTime = ros::Time::now();
         for (int i = 0; i < vlp_pcd.size(); i = i + 1) {
+            pcl::PointXYZI point_xyzi;
             if(sqrt(vlp_pcd[i].x*vlp_pcd[i].x + vlp_pcd[i].y*vlp_pcd[i].y +vlp_pcd[i].z*vlp_pcd[i].z)<50){
-       /*         std::vector<int> indices; // 存储查询近邻点索引
+                point_xyzi.x = vlp_pcd[i].x;
+                point_xyzi.y = vlp_pcd[i].y;
+                point_xyzi.z = vlp_pcd[i].z;
+                point_xyzi.intensity = vlp_pcd[i].intensity;
 
-                Eigen::Vector3d point;
-                point = Eigen::Vector3d(vlp_pcd[i].x,vlp_pcd[i].y,vlp_pcd[i].z);
-                point =  curr_pose.rotation()*point + curr_pose.translation();
-                pcl::PointNormal temp;
-                temp.x = point.x();
-                temp.y = point.y();
-                temp.z = point.z();
-                kdtree->radiusSearch(temp, 5, indices, distances);
-                for (int j = 0; j < indices.size(); ++j) {
-                    indices_unique.push_back(indices[j]);
-                }*/
                 vlp_pcd_ds.push_back(vlp_pcd[i]);
+                vlp_pcd_ds_ptr->push_back(point_xyzi);
             }
         }
+        sor.setInputCloud(vlp_pcd_ds_ptr);
+        sor.setLeafSize(2, 2, 0.5);
+        sor.filter(vlp_ds_pcd);
+        std::cout<<"process Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
+        processTime = ros::Time::now();
         //todo local map test
         std::vector<int> indices; // 存储查询近邻点索引
         Eigen::Vector3d point;
         point = Eigen::Vector3d(T_map.translation().x(),T_map.translation().y(),T_map.translation().z());
 
-        pcl::PointNormal temp;
+      /*  pcl::PointNormal temp;
         temp.x = point.x();
         temp.y = point.y();
         temp.z = point.z();
-        kdtree->radiusSearch(temp, 50, indices_unique, distances);
-
+        kdtree->radiusSearch(temp, 55, indices_unique, distances);*/
+        for (int i = 0; i < vlp_ds_pcd.size(); ++i) {
+            std::vector<int> indices; // 存储查询近邻点索引
+            Eigen::Vector3d point;
+            point = Eigen::Vector3d(vlp_ds_pcd[i].x,vlp_ds_pcd[i].y,vlp_ds_pcd[i].z);
+            point =  curr_pose.rotation()*point + curr_pose.translation();
+            pcl::PointNormal temp;
+            temp.x = point.x();
+            temp.y = point.y();
+            temp.z = point.z();
+            kdtree->radiusSearch(temp, 4, indices, distances);
+            for (int j = 0; j < indices.size(); ++j) {
+                indices_unique.push_back(indices[j]);
+            }
+        }
         std::sort(indices_unique.begin(),indices_unique.end());
         indices_unique.erase(std::unique(indices_unique.begin(),indices_unique.end()),indices_unique.end());
 
         for (int j = 0; j < indices_unique.size(); ++j) {
             LocalMap.push_back(mls_points[indices_unique[j]]);
         }
+        std::cout<<"map Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
 
         ImuDistortion(vlp_pcd.front().time,vlp_pcd.back().time); //todo finish later <<<<vlp_pcd_ds>>>
         //3. ICP
-        registrion(vlp_pcd_ds,LocalMap);
+        processTime = ros::Time::now();
+        registrion(vlp_ds_pcd,LocalMap);
+        std::cout<<"icp Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
         //4.pub
         pcl::toPCLPointCloud2(Transfer_local_point, pcl_frame);
         pcl_conversions::fromPCL(pcl_frame, LiDAR_Distort);
@@ -136,10 +157,10 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
     //std::cerr<<FrameTime<<" ImuQueue.size(): "<<ImuQueue.size()<<" sync_imu: "<<sync_imu.size()<<std::endl;
 }
 
-void LiDAR_matching_lib::registrion(pcl::PointCloud<VLPPoint> source,
+void LiDAR_matching_lib::registrion(pcl::PointCloud<pcl::PointXYZI> source,
                                     pcl::PointCloud<pcl::PointNormal> target) {
 
-    pcl::PointCloud<VLPPoint>::Ptr temp(new pcl::PointCloud<VLPPoint>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr temp(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointNormal> map_T_last;
     pcl::PointCloud<pcl::PointXYZI> local_map;
     *temp = source;

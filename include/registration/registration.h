@@ -28,7 +28,7 @@ public:
 	//scan-scan 参数
 	void SetNormalICP();
 	//scan-map参数
-    pcl::PointCloud<pcl::PointXYZI> normalIcpRegistration(pcl::PointCloud<VLPPoint>::Ptr source,
+    pcl::PointCloud<pcl::PointXYZI> normalIcpRegistration(pcl::PointCloud<pcl::PointXYZI>::Ptr source,
                                                           pcl::PointCloud<pcl::PointNormal> target);
 	Eigen::Matrix4f transform_frame_to_frame = Eigen::Matrix4f::Identity();
 	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity(); //全局位姿
