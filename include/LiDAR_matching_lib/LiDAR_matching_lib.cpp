@@ -27,7 +27,7 @@ void LiDAR_matching_lib::process() {
         pcl::fromROSMsg(Point_raw,vlp_pcd);
         Eigen::Affine3d curr_pose;
         curr_pose = T_map;// todo predict the cloud map pose// <<later us imu!!!!>>
-        //1.1
+        //1.1 2
         std::vector<int> indices_unique;
         for (int i = 0; i < vlp_pcd.size(); i = i + 1) {
             if(sqrt(vlp_pcd[i].x*vlp_pcd[i].x + vlp_pcd[i].y*vlp_pcd[i].y +vlp_pcd[i].z*vlp_pcd[i].z)<50){
