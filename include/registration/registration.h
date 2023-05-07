@@ -30,6 +30,8 @@ public:
 	//scan-map参数
     pcl::PointCloud<pcl::PointXYZI> normalIcpRegistration(pcl::PointCloud<pcl::PointXYZI>::Ptr source,
                                                           pcl::PointCloud<pcl::PointNormal> target);
+    void icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source,
+             pcl::PointCloud<pcl::PointNormal> target);
 	Eigen::Matrix4f transform_frame_to_frame = Eigen::Matrix4f::Identity();
 	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity(); //全局位姿
 	Eigen::Matrix4f icp_init = Eigen::Matrix4f::Identity();//icp的初值
@@ -37,6 +39,7 @@ public:
 	//tools ReOrthogonalization 防止累计误差
 	Eigen::Isometry3d  ReOrthogonalization(Eigen::Isometry3d input);
 	pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>::Ptr pcl_plane_plane_icp;
+    pcl::IterativeClosestPoint<pcl::PointXYZI,pcl::PointXYZI> ICP;
 	//可视化normal
 	pcl::PointCloud<pcl::PointXYZINormal> local_map_with_normal;
 };

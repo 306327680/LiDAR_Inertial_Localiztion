@@ -73,6 +73,7 @@ private:
     pcl::PointCloud<VLPPoint> vlp_pcd;
     pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;
     pcl::VoxelGrid<pcl::PointXYZI> sor;
+    std::vector<int> indices_last;
     std::vector<float> distances; // 存储近邻点对应距离的平方
     double FrameTime =0;
     double LastFrameTime =0;

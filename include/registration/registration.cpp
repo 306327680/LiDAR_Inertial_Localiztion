@@ -37,8 +37,8 @@ void registration::addNormal(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
 void registration::SetNormalICP() {
 	pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>::Ptr icp(
 			new pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>());
-	icp->setMaximumIterations(30);
-	icp->setMaxCorrespondenceDistance(5);
+	icp->setMaximumIterations(100);
+	icp->setMaxCorrespondenceDistance(3);
 	icp->setTransformationEpsilon(0.001);
 	icp->setEuclideanFitnessEpsilon(0.001);
 	this->pcl_plane_plane_icp = icp;
@@ -92,4 +92,26 @@ pcl::PointCloud<pcl::PointXYZI> registration::normalIcpRegistration(pcl::PointCl
     increase =  pcl_plane_plane_icp->getFinalTransformation();
 	pcl::transformPointCloud(*source, tfed, transformation.matrix());
 	return tfed;
+}
+
+void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCloud<pcl::PointNormal> target) {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr target_(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr source_(new pcl::PointCloud<pcl::PointXYZI>);
+    for (int i = 0; i < target.size(); ++i) {
+        pcl::PointXYZI temp;
+        temp.x = target[i].x;
+        temp.y = target[i].y;
+        temp.z = target[i].z;
+        target_->push_back(temp);
+
+    }
+    ICP.setMaximumIterations(100);
+    ICP.setMaxCorrespondenceDistance(3);
+    ICP.setTransformationEpsilon(0.001);
+    ICP.setEuclideanFitnessEpsilon(0.001);
+    ICP.setInputSource(source);
+    ICP.setInputTarget(target_);
+    ICP.align(*source_);
+    transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
+    increase =  ICP.getFinalTransformation();
 }
