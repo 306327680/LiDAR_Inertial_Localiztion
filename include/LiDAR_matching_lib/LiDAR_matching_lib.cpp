@@ -96,9 +96,9 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
             imuReady = true;
         } else{
             Eigen::Vector3d gyro;
-            gyro[0] = ImuQueue.front().angular_velocity.x;
+            gyro[0] = -ImuQueue.front().angular_velocity.x;
             gyro[1] = ImuQueue.front().angular_velocity.y;
-            gyro[2] = ImuQueue.front().angular_velocity.z;
+            gyro[2] = -ImuQueue.front().angular_velocity.z;
             Eigen::Quaterniond dq;
             Eigen::Vector3d dtheta_half = (gyro_last+gyro) * IMU_period_time / 2.0;
             gyro_last = gyro;
@@ -123,17 +123,18 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
         Eigen::Quaterniond q_init;
         findRotation(FrameTime + first_point_time ,q_init);//all transform to Frame time
         Eigen::Quaterniond q;
-        for (int i = 0; i < vlp_pcd.size(); ++i) {
-            findRotation(FrameTime + vlp_pcd[i].time,q);
-            Eigen::Vector3d point(vlp_pcd[i].x,vlp_pcd[i].y,vlp_pcd[i].z);
+        for (int i = 0; i < vlp_ds_pcd.size(); ++i) {
+            findRotation(FrameTime + vlp_ds_pcd[i].intensity,q);
+            Eigen::Vector3d point(vlp_ds_pcd[i].x,vlp_ds_pcd[i].y,vlp_ds_pcd[i].z);
             point =  q.matrix() * q_init.matrix().inverse() * point;
-            vlp_pcd[i].x = point.x();
-            vlp_pcd[i].y = point.y();
-            vlp_pcd[i].z = point.z();
+            vlp_ds_pcd[i].x = point.x();
+            vlp_ds_pcd[i].y = point.y();
+            vlp_ds_pcd[i].z = point.z();
         }
         if(LastFrameTime != 0){
             findRotation(LastFrameTime,q);
             T_map = T_map.rotate(q.matrix()*q_init.matrix().inverse());
+//            T_map = T_map.translate(Eigen::Vector3d (icp.increase(0,3),icp.increase(1,3),icp.increase(2,3)));
         }
         LastFrameTime = FrameTime;
     }
@@ -218,7 +219,20 @@ void LiDAR_matching_lib::handleMessage() {
 }
 
 void LiDAR_matching_lib::InputDownSample() {
-
+    pcl::PointCloud<pcl::PointXYZI>::Ptr vlp_pcd_ds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+    for (int i = 0; i < vlp_pcd.size(); i = i + 1) {
+        pcl::PointXYZI point_xyzi;
+        if(sqrt(vlp_pcd[i].x*vlp_pcd[i].x + vlp_pcd[i].y*vlp_pcd[i].y +vlp_pcd[i].z*vlp_pcd[i].z)<50){
+            point_xyzi.x = vlp_pcd[i].x;
+            point_xyzi.y = vlp_pcd[i].y;
+            point_xyzi.z = vlp_pcd[i].z;
+            point_xyzi.intensity = vlp_pcd[i].time;
+            vlp_pcd_ds_ptr->push_back(point_xyzi);
+        }
+    }
+    sor.setInputCloud(vlp_pcd_ds_ptr);
+    sor.setLeafSize(0.5, 0.5, 0.5);
+    sor.filter(vlp_ds_pcd);
 }
 
 void LiDAR_matching_lib::findRotation(double pointTime, Eigen::Quaterniond &Q)
@@ -248,20 +262,20 @@ void LiDAR_matching_lib::setInitParam( ) {
 
 void LiDAR_matching_lib::genLocalMap() {
     Eigen::Affine3d curr_pose;
-    pcl::PointCloud<VLPPoint> vlp_pcd_ds;
+//    pcl::PointCloud<VLPPoint> vlp_pcd_ds;
     pcl::PointCloud<pcl::PointXYZI>::Ptr vlp_pcd_ds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     std::vector<int> indices_unique;
     curr_pose = T_map;
 
-    for (int i = 0; i < vlp_pcd.size(); i = i + 1) {
+    for (int i = 0; i < vlp_ds_pcd.size(); i = i + 1) {
         pcl::PointXYZI point_xyzi;
-        if(sqrt(vlp_pcd[i].x*vlp_pcd[i].x + vlp_pcd[i].y*vlp_pcd[i].y +vlp_pcd[i].z*vlp_pcd[i].z)<50){
-            point_xyzi.x = vlp_pcd[i].x;
-            point_xyzi.y = vlp_pcd[i].y;
-            point_xyzi.z = vlp_pcd[i].z;
-            point_xyzi.intensity = vlp_pcd[i].intensity;
+        if(sqrt(vlp_ds_pcd[i].x*vlp_ds_pcd[i].x + vlp_ds_pcd[i].y*vlp_ds_pcd[i].y +vlp_ds_pcd[i].z*vlp_ds_pcd[i].z)<50){
+            point_xyzi.x = vlp_ds_pcd[i].x;
+            point_xyzi.y = vlp_ds_pcd[i].y;
+            point_xyzi.z = vlp_ds_pcd[i].z;
+            point_xyzi.intensity = vlp_ds_pcd[i].intensity;
 
-            vlp_pcd_ds.push_back(vlp_pcd[i]);
+//            vlp_pcd_ds.push_back(vlp_ds_pcd[i]);
             vlp_pcd_ds_ptr->push_back(point_xyzi);
         }
     }

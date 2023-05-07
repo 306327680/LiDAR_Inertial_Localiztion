@@ -37,10 +37,10 @@ void registration::addNormal(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
 void registration::SetNormalICP() {
 	pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>::Ptr icp(
 			new pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>());
-	icp->setMaximumIterations(10);
-	icp->setMaxCorrespondenceDistance(10);
-	icp->setTransformationEpsilon(0.01);
-	icp->setEuclideanFitnessEpsilon(0.01);
+	icp->setMaximumIterations(30);
+	icp->setMaxCorrespondenceDistance(5);
+	icp->setTransformationEpsilon(0.001);
+	icp->setEuclideanFitnessEpsilon(0.001);
 	this->pcl_plane_plane_icp = icp;
 	
 }
@@ -74,8 +74,7 @@ pcl::PointCloud<pcl::PointXYZI> registration::normalIcpRegistration(pcl::PointCl
 													  pcl::PointCloud<pcl::PointNormal> target){
 	pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_source_normals(
 			new pcl::PointCloud<pcl::PointXYZINormal>());
-	pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_source_normals_temp(
-			new pcl::PointCloud<pcl::PointXYZINormal>());
+
 	pcl::PointCloud<pcl::PointXYZINormal>::Ptr cloud_target_normals(
 			new pcl::PointCloud<pcl::PointXYZINormal>());
 	pcl::PointCloud<pcl::PointXYZI> tfed;
@@ -83,20 +82,14 @@ pcl::PointCloud<pcl::PointXYZI> registration::normalIcpRegistration(pcl::PointCl
 
 	addNormal(source, cloud_source_normals);
 	local_map_with_normal = *cloud_target_normals;
-    *cloud_source_normals_temp = *cloud_source_normals;
-    //0. 当前预测量 = 上次位姿态*增量
-//    icp_init = transformation ;
-//    icp_init = ReOrthogonalization(Eigen::Isometry3d(icp_init.matrix().cast<double>())).matrix().cast<float>();
-    //1.转换点云 给一个初值
-//    pcl::transformPointCloud(*cloud_source_normals_temp, *cloud_source_normals, icp_init.matrix());
-    *cloud_source_normals = *cloud_source_normals_temp;
+
     pcl_plane_plane_icp->setInputSource(cloud_source_normals);
     pcl_plane_plane_icp->setInputTarget(cloud_target_normals);
     pcl_plane_plane_icp->align(*cloud_source_normals);
 
     transformation =  pcl_plane_plane_icp->getFinalTransformation();//上次结果(结果加预测)
-//    transformation = icp_init * pcl_plane_plane_icp->getFinalTransformation();//上次结果(结果加预测)
-    increase = increase * pcl_plane_plane_icp->getFinalTransformation();
+
+    increase =  pcl_plane_plane_icp->getFinalTransformation();
 	pcl::transformPointCloud(*source, tfed, transformation.matrix());
 	return tfed;
 }

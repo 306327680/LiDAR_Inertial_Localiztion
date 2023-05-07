@@ -41,6 +41,10 @@ int main(int argc, char** argv){
     ros::Publisher pubImuPath = nh.advertise<nav_msgs::Path>    ("imu/path", 1);
     if(debug){
         LM.T_map.setIdentity();
+        LM.extrinsicRot.setZero();//(1, 0, 0, 0, -1, 0, 0, 0, -1);
+        LM.extrinsicRot(0,0) = 1;
+        LM.extrinsicRot(1,1) = -1;
+        LM.extrinsicRot(2,2) = -1;
         Eigen::Quaterniond q;
         //start
         q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;

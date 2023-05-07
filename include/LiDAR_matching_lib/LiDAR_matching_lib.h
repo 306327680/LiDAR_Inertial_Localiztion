@@ -52,7 +52,8 @@ public:
     pcl::PointCloud<pcl::PointNormal> mls_points;
     Eigen::Affine3d T_map;
     double *DebugTime = new double[5];
-
+    //4. extric parameter
+    Eigen::Matrix3d extrinsicRot;
 private:
     void InputDownSample();
     void ImuDistortion(double first_point_time,double last_point_time);
