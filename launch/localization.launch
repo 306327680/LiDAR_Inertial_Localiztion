@@ -1,0 +1,9 @@
+<launch>
+
+    <arg name="project" default="LiDAR_Inertia_Localiztion"/>
+
+    <node pkg="$(arg project)" type="LiDAR_matching"   name="LiDAR_matching"    output="screen" 	respawn="true"/>
+<!--    <node pkg="$(arg project)" type="$(arg project)_imageProjection"     name="$(arg project)_imageProjection"      output="screen"     respawn="true"/>-->
+
+
+</launch>

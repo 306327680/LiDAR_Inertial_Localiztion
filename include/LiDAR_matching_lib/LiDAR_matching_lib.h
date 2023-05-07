@@ -35,19 +35,34 @@ public:
     bool newIMU = false;
     bool newLiDAR = false;
     std::queue<sensor_msgs::Imu> ImuQueue;
+    std::vector<double> IMU_Time;
+    std::vector<Eigen::Quaterniond> IMU_q;
     //2.Output
     pcl::PointCloud<pcl::PointNormal> LocalMap;
     sensor_msgs::PointCloud2 LocalMapPC2;
     sensor_msgs::PointCloud2 LiDAR_Distort;
+    nav_msgs::Odometry  LiDAR_map;
+    nav_msgs::Odometry  LiDAR_map_last;
     sensor_msgs::PointCloud2 mls_map;
     //3.Variables
     pcl::PointCloud<pcl::PointNormal> mls_points;
     Eigen::Affine3d T_map;
+    double *DebugTime = new double[5];
 
 private:
+    void setInitParam(Eigen::Affine3d &pose);
+    void InputDownSample();
     void ImuDistortion(double first_point_time,double last_point_time);
     void registrion(pcl::PointCloud<pcl::PointXYZI> source,
                     pcl::PointCloud<pcl::PointNormal> target);
+    void handleMessage();
+    void findRotation(double pointTime, Eigen::Quaterniond &Q);
+
+    bool imuReady = false;
+   //1. params
+    float IMU_period_time = 0.005;
+    int IMU_freq = 200;
+    Eigen::Vector3d gyro_last;
     pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree;
     pcl::PointCloud<VLPPoint> vlp_pcd;
     pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;

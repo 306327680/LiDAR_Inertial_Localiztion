@@ -28,7 +28,11 @@ add_library(registration
 target_link_libraries(registration
         ${PCL_LIBRARIES})
 
-add_executable(LiDAR_matching src/LiDAR_matching.cpp include/LiDAR_matching_lib/LiDAR_matching_lib.h
-        include/LiDAR_matching_lib/LiDAR_matching_lib.cpp include/pointType/pointTypes.h)
+add_executable(LiDAR_matching src/LiDAR_matching_node.cpp include/LiDAR_matching_lib/LiDAR_matching_lib.h
+        include/LiDAR_matching_lib/LiDAR_matching_lib.cpp include/pointType/pointTypes.h include/utils.cpp)
 add_dependencies(LiDAR_matching ${catkin_EXPORTED_TARGETS}  )
 target_link_libraries(LiDAR_matching ${catkin_LIBRARIES}   registration ${PCL_LIBRARIES})
+
+add_executable(IMU_Preintegration src/IMU_preintergration_node.cpp include/utils.cpp)
+add_dependencies(IMU_Preintegration ${catkin_EXPORTED_TARGETS}  )
+target_link_libraries(IMU_Preintegration ${catkin_LIBRARIES}   registration ${PCL_LIBRARIES})
