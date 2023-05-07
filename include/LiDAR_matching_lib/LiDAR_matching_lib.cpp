@@ -20,23 +20,20 @@ void LiDAR_matching_lib::process() {
             pcl::PCLPointCloud2 pcl_pc2;
             pcl::fromROSMsg(Point_raw,vlp_pcd);
         }
-
-        vlp_ds_pcd.clear();
-        processTime = ros::Time::now();
-        InputDownSample();// todo 1.Down sample Increase speed
-        ImuDistortion(vlp_pcd.front().time,vlp_pcd.back().time); //2. Input distortion
-        std::cout<<"Distortion Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
-        processTime = ros::Time::now();
-        setInitParam( );
+        AccumulateImu();
         if(imuReady){
+            vlp_ds_pcd.clear();
+            processTime = ros::Time::now();
+            InputDownSample();// todo 1.Down sample Increase speed
+            ImuDistortion(vlp_pcd.front().time,vlp_pcd.back().time); //2. Input distortion
+            std::cout<<"1. Distortion Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
+            processTime = ros::Time::now();
             genLocalMap( );
-            std::cout<<"map Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
-            DebugTime[1] = processTime.toSec()-ros::Time::now().toSec();
+            std::cout<<"4. map Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
             //3. ICP
             processTime = ros::Time::now();
             registrion(vlp_ds_pcd,LocalMap);
-            std::cout<<"icp Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
-            DebugTime[2] = processTime.toSec()-ros::Time::now().toSec();
+            std::cout<<"5. icp Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
             handleMessage();
             pcl::fromROSMsg(Point_raw,vlp_pcd); //untill imu queue is ok
             FrameTime = Point_raw.header.stamp.toSec();
@@ -93,33 +90,6 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
     FrameTime = FrameTime + time_offset;
     std::vector<sensor_msgs::Imu> sync_imu;
     //XXX IMU_q starts from q[last.back()]<<T[last_scan first cloud time]<<q[0]<<q[1]<<...<<q[back]<<T[last_scan last cloud time] time
-    for (int i = 0; i < ImuQueue.size(); ++i) {
-        if(IMU_Time.back() >= FrameTime + last_point_time){
-            imuReady = true;
-        } else{
-            Eigen::Vector3d gyro;
-            gyro[0] = -ImuQueue.front().angular_velocity.x;
-            gyro[1] = ImuQueue.front().angular_velocity.y;
-            gyro[2] = -ImuQueue.front().angular_velocity.z;
-            Eigen::Quaterniond dq;
-            Eigen::Vector3d dtheta_half = (gyro_last+gyro) * IMU_period_time / 2.0;
-            gyro_last = gyro;
-            dq.w() = 1;
-            dq.x() = dtheta_half.x();
-            dq.y() = dtheta_half.y();
-            dq.z() = dtheta_half.z();
-            if(IMU_q.empty()){
-                dq.setIdentity();
-                IMU_q.push_back( dq );
-            }else{
-                dq = IMU_q.back()*dq;
-                dq.normalize();
-                IMU_q.push_back( dq );
-            }
-            IMU_Time.push_back(ImuQueue.front().header.stamp.toSec());
-            ImuQueue.pop();
-        }
-    }
 
     if(imuReady){
         Eigen::Quaterniond q_init;
@@ -138,7 +108,6 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
 //            T_map = T_map.rotate(q.matrix()*q_init.matrix().inverse());
 //            T_map = T_map.translate(Eigen::Vector3d (icp.increase(0,3),icp.increase(1,3),icp.increase(2,3)));
         }
-        LastFrameTime = FrameTime;
     }
 }
 
@@ -194,7 +163,9 @@ void LiDAR_matching_lib::handleMessage() {
     LiDAR_map.pose.pose.orientation.y = q.y();
     LiDAR_map.pose.pose.orientation.z = q.z();
     LiDAR_map.pose.pose.orientation.w = q.w();
-
+    LiDAR_map.twist.twist.linear.x = icp.increase(0,3)/(FrameTime - LastFrameTime);
+    LiDAR_map.twist.twist.linear.y = icp.increase(1,3)/(FrameTime - LastFrameTime);
+    LiDAR_map.twist.twist.linear.z = icp.increase(2,3)/(FrameTime - LastFrameTime);
 //    q = T_map.rotation();
 //    LiDAR_map.pose.pose.orientation.x = q.x();
 //    LiDAR_map.pose.pose.orientation.y = q.y();
@@ -224,6 +195,7 @@ void LiDAR_matching_lib::handleMessage() {
         IMU_q = IMU_q_tmp;
         IMU_Time = IMU_Time_tmp;
     }
+    LastFrameTime = FrameTime;
 }
 
 void LiDAR_matching_lib::InputDownSample() {
@@ -261,14 +233,11 @@ void LiDAR_matching_lib::findRotation(double pointTime, Eigen::Quaterniond &Q)
     }
 }
 //init value from IMU
-void LiDAR_matching_lib::setInitParam( ) {
-    //pose = T_map;// todo predict the cloud map pose// <<later us imu!!!!>>
-    LiDAR_map_last.pose.pose.position.x = T_map.translation().x();
-    LiDAR_map_last.pose.pose.position.y = T_map.translation().y();
-    LiDAR_map_last.pose.pose.position.z = T_map.translation().z();
-}
+
 
 void LiDAR_matching_lib::genLocalMap() {
+    ros::Time processTime;
+    processTime = ros::Time::now();
     Eigen::Affine3d curr_pose;
 //    pcl::PointCloud<VLPPoint> vlp_pcd_ds;
     pcl::PointCloud<pcl::PointXYZI>::Ptr vlp_pcd_ds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
@@ -282,14 +251,12 @@ void LiDAR_matching_lib::genLocalMap() {
             point_xyzi.y = vlp_ds_pcd[i].y;
             point_xyzi.z = vlp_ds_pcd[i].z;
             point_xyzi.intensity = vlp_ds_pcd[i].intensity;
-
             vlp_pcd_ds_ptr->push_back(point_xyzi);
         }
     }
     sor.setInputCloud(vlp_pcd_ds_ptr);
     sor.setLeafSize(1.5, 1.5, 0.25);
     sor.filter(vlp_ds_pcd);
-
     //todo local map test
     std::vector<int> indices; // 存储查询近邻点索引
     Eigen::Vector3d point;
@@ -308,11 +275,14 @@ void LiDAR_matching_lib::genLocalMap() {
         temp.x = point.x();
         temp.y = point.y();
         temp.z = point.z();
-        kdtree->radiusSearch(temp, 6, indices, distances);
+        kdtree->nearestKSearch(temp,15,indices,distances);
+//        kdtree->radiusSearch(temp, 6, indices, distances);
         for (int j = 0; j < indices.size(); ++j) {
             indices_unique.push_back(indices[j]);
         }
     }
+    std::cout<<"2. Kdtree Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
+    processTime = ros::Time::now();
 //    for (int i = 0; i <indices_last.size() ; ++i) {
 //        indices_unique.push_back(indices_last[i]);
 //    }
@@ -322,6 +292,38 @@ void LiDAR_matching_lib::genLocalMap() {
         LocalMap.push_back(mls_points[indices_unique[j]]);
     }
     indices_last = indices_unique;
+    std::cout<<"3. from indices find map Time: "<<processTime.toSec()-ros::Time::now().toSec()<<std::endl;
+    processTime = ros::Time::now();
+}
+
+void LiDAR_matching_lib::AccumulateImu() {
+    for (int i = 0; i < ImuQueue.size(); ++i) {
+        if(IMU_Time.back() >= FrameTime + vlp_pcd.back().time){
+            imuReady = true;
+        } else{
+            Eigen::Vector3d gyro;
+            gyro[0] = -ImuQueue.front().angular_velocity.x;
+            gyro[1] = ImuQueue.front().angular_velocity.y;
+            gyro[2] = -ImuQueue.front().angular_velocity.z;
+            Eigen::Quaterniond dq;
+            Eigen::Vector3d dtheta_half = (gyro_last+gyro) * IMU_period_time / 2.0;
+            gyro_last = gyro;
+            dq.w() = 1;
+            dq.x() = dtheta_half.x();
+            dq.y() = dtheta_half.y();
+            dq.z() = dtheta_half.z();
+            if(IMU_q.empty()){
+                dq.setIdentity();
+                IMU_q.push_back( dq );
+            }else{
+                dq = IMU_q.back()*dq;
+                dq.normalize();
+                IMU_q.push_back( dq );
+            }
+            IMU_Time.push_back(ImuQueue.front().header.stamp.toSec());
+            ImuQueue.pop();
+        }
+    }
 }
 
 

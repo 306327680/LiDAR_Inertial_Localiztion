@@ -60,7 +60,7 @@ int main(int argc, char** argv){
         LM.InitPoseBool = true;
     }
 
-    ros::Rate r(500);
+    ros::Rate r(100);
     while(ros::ok()){
         ros::spinOnce();
         if(LM.newLiDAR){
