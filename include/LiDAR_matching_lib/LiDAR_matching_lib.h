@@ -21,6 +21,7 @@
 #include "pointType/pointTypes.h"
 #include <registration/registration.h>
 #include <pcl/filters/voxel_grid.h>
+#include <nav_msgs/Path.h>
 class LiDAR_matching_lib {
 public:
     LiDAR_matching_lib(){};
@@ -40,7 +41,10 @@ public:
     //2.Output
     pcl::PointCloud<pcl::PointNormal> LocalMap;
     sensor_msgs::PointCloud2 LocalMapPC2;
-    sensor_msgs::PointCloud2 LiDAR_Distort;
+    sensor_msgs::PointCloud2 LiDAR_Map;
+    sensor_msgs::PointCloud2 LiDAR_Map_V;
+    sensor_msgs::PointCloud2 LiDAR_Deskew;
+    nav_msgs::Path IMU_path;
     nav_msgs::Odometry  LiDAR_map;
     nav_msgs::Odometry  LiDAR_map_last;
     sensor_msgs::PointCloud2 mls_map;
@@ -50,9 +54,10 @@ public:
     double *DebugTime = new double[5];
 
 private:
-    void setInitParam(Eigen::Affine3d &pose);
     void InputDownSample();
     void ImuDistortion(double first_point_time,double last_point_time);
+    void setInitParam();
+    void genLocalMap();
     void registrion(pcl::PointCloud<pcl::PointXYZI> source,
                     pcl::PointCloud<pcl::PointNormal> target);
     void handleMessage();
@@ -61,14 +66,15 @@ private:
     bool imuReady = false;
    //1. params
     float IMU_period_time = 0.005;
-    int IMU_freq = 200;
     Eigen::Vector3d gyro_last;
+    Eigen::Quaterniond IMU_predict_q;
     pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree;
     pcl::PointCloud<VLPPoint> vlp_pcd;
     pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;
     pcl::VoxelGrid<pcl::PointXYZI> sor;
     std::vector<float> distances; // 存储近邻点对应距离的平方
     double FrameTime =0;
+    double LastFrameTime =0;
     registration icp;
     pcl::PointCloud<pcl::PointXYZI> Transfer_local_point;
 };

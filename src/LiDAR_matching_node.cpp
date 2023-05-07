@@ -33,9 +33,12 @@ int main(int argc, char** argv){
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 1000, PointCallback);
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1000, InitPoseCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1000);
-    ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_Distortion", 1000);
+    ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_map_Distortion", 1000);
+    ros::Publisher LiDAR_deskew_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_deskew", 1000);
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1000);
+    ros::Publisher Local_map_velodyne = nh.advertise<sensor_msgs::PointCloud2>("/local_map_velodyne", 1000);
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1000);
+    ros::Publisher pubImuPath = nh.advertise<nav_msgs::Path>    ("imu/path", 1);
     if(debug){
         LM.T_map.setIdentity();
         Eigen::Quaterniond q;
@@ -43,11 +46,13 @@ int main(int argc, char** argv){
         q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
         LM.T_map.rotate(q.matrix()) ;
         LM.T_map.translation()<<0,0,0;
-        LM.IMU_q.push_back( q  );//todo clear
-        LM.IMU_Time.push_back(0);
+
 //        q.x() = 0.0108444616199; q.y() = -0.12032815069; q.z() = -0.151517733932; q.w() =0.981043279171;
 //        LM.T_map.rotate(q.matrix()) ;
 //        LM.T_map.translation()<<271.907041259,427.126210513,0;
+
+        LM.IMU_q.push_back( q );//todo clear
+        LM.IMU_Time.push_back(0);
         LM.InitPoseBool = true;
     }
 
@@ -57,10 +62,12 @@ int main(int argc, char** argv){
         if(LM.newLiDAR){
             LM.process();
             //map_pub.publish(LM.mls_map);
-            LiDAR_pub.publish(LM.LiDAR_Distort);
+            LiDAR_pub.publish(LM.LiDAR_Map);
             Local_map_pub.publish(LM.LocalMapPC2);
             odom_pub.publish(LM.LiDAR_map);
-
+            LiDAR_deskew_pub.publish(LM.LiDAR_Deskew);
+            Local_map_velodyne.publish(LM.LiDAR_Map_V);
+            pubImuPath.publish(LM.IMU_path);
             LM.newLiDAR = false;
         }
         r.sleep();
