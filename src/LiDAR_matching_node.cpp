@@ -5,7 +5,7 @@
 #include "LiDAR_matching_lib/LiDAR_matching_lib.h"
 LiDAR_matching_lib LM;
 void ImuCallback(const sensor_msgs::Imu::ConstPtr& msg){
-    LM.ImuQueue.push(*msg);
+    LM.ImuQueue.push_back(*msg);
     LM.newIMU = true;
 }
 void PointCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
@@ -26,6 +26,8 @@ void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& 
 int main(int argc, char** argv){
     bool debug = true;
     ros::init(argc, argv, "LiDAR_matching");
+    std::cout<<argv[1]<<std::endl;
+    LM.time_offset = std::atof(argv[1]);
     ros::NodeHandle nh("~");
     LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth_ds.pcd");
     ROS_WARN("Map Finish");
@@ -38,6 +40,7 @@ int main(int argc, char** argv){
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1000);
     ros::Publisher Local_map_velodyne = nh.advertise<sensor_msgs::PointCloud2>("/local_map_velodyne", 1000);
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1000);
+    ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1000);
     ros::Publisher pubImuPath = nh.advertise<nav_msgs::Path>    ("imu/path", 1);
     if(debug){
         LM.T_map.setIdentity();
@@ -60,20 +63,21 @@ int main(int argc, char** argv){
         LM.InitPoseBool = true;
     }
 
-    ros::Rate r(100);
+    ros::Rate r(1000);
     while(ros::ok()){
-        ros::spinOnce();
         if(LM.newLiDAR){
             LM.process();
             //map_pub.publish(LM.mls_map);
             LiDAR_pub.publish(LM.LiDAR_Map);
             Local_map_pub.publish(LM.LocalMapPC2);
             odom_pub.publish(LM.LiDAR_map);
-            LiDAR_deskew_pub.publish(LM.LiDAR_Deskew);
-            Local_map_velodyne.publish(LM.LiDAR_Map_V);
-            pubImuPath.publish(LM.IMU_path);
+            Imu_LiDAR_pub.publish(LM.LiDAR_at_IMU_Time);
+            //LiDAR_deskew_pub.publish(LM.LiDAR_Deskew);
+            //Local_map_velodyne.publish(LM.LiDAR_Map_V);
+            //pubImuPath.publish(LM.IMU_path);
             LM.newLiDAR = false;
         }
+        ros::spinOnce();
         r.sleep();
     }
 }

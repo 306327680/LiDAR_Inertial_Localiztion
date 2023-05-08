@@ -35,7 +35,7 @@ public:
     bool InitPoseCome = false;
     bool newIMU = false;
     bool newLiDAR = false;
-    std::queue<sensor_msgs::Imu> ImuQueue;
+    std::vector<sensor_msgs::Imu> ImuQueue;
     std::vector<double> IMU_Time;
     std::vector<Eigen::Quaterniond> IMU_q;
     //2.Output
@@ -46,7 +46,7 @@ public:
     sensor_msgs::PointCloud2 LiDAR_Deskew;
     nav_msgs::Path IMU_path;
     nav_msgs::Odometry  LiDAR_map;
-    nav_msgs::Odometry  LiDAR_map_last;
+    nav_msgs::Odometry  LiDAR_at_IMU_Time;
     sensor_msgs::PointCloud2 mls_map;
     //3.Variables
     pcl::PointCloud<pcl::PointNormal> mls_points;
@@ -54,6 +54,7 @@ public:
 
     //4. extric parameter
     Eigen::Matrix3d extrinsicRot;
+    double time_offset = 0;
 private:
     void AccumulateImu();
     void InputDownSample();

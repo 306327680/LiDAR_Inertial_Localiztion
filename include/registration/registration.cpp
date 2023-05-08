@@ -111,6 +111,7 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
     ICP.setEuclideanFitnessEpsilon(0.001);
     ICP.setInputSource(source);
     ICP.setInputTarget(target_);
+
     ICP.align(*source_);
     transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
     increase =  ICP.getFinalTransformation();

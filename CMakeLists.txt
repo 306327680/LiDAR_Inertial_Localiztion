@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(LiDAR_Inertia_Localiztion)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g -pthread")
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
