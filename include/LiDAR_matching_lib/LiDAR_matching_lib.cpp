@@ -111,8 +111,7 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time,double last_point
             findRotation(LastFrameTime,q_last);
             T_map = T_map.rotate( q_init.matrix());
             T_map = T_map.rotate( q_last.matrix().inverse());
-
-//            T_map = T_map.translate(Eigen::Vector3d (icp.increase(0,3),icp.increase(1,3),icp.increase(2,3)));
+            T_map = T_map.translate(Eigen::Vector3d (icp.increase(0,3),icp.increase(1,3),icp.increase(2,3)));
         }
         LiDAR_at_IMU_Time.header.stamp = ros::Time(FrameTime);
         LiDAR_at_IMU_Time.header.frame_id = "/map";
