@@ -22,6 +22,7 @@
 #include <registration/registration.h>
 #include <pcl/filters/voxel_grid.h>
 #include <nav_msgs/Path.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
 class LiDAR_matching_lib {
 public:
     LiDAR_matching_lib(){};
@@ -42,9 +43,9 @@ public:
     pcl::PointCloud<pcl::PointNormal> LocalMap;
     sensor_msgs::PointCloud2 LocalMapPC2;
     sensor_msgs::PointCloud2 LiDAR_Map;
-    sensor_msgs::PointCloud2 LiDAR_Map_V;
-    sensor_msgs::PointCloud2 LiDAR_Deskew;
-    nav_msgs::Path IMU_path;
+
+    diagnostic_msgs::DiagnosticStatus Time_used;
+
     nav_msgs::Odometry  LiDAR_map;
     nav_msgs::Odometry  LiDAR_at_IMU_Time;
     sensor_msgs::PointCloud2 mls_map;
@@ -65,7 +66,7 @@ private:
                     pcl::PointCloud<pcl::PointNormal> target);
     void handleMessage();
     void findRotation(double pointTime, Eigen::Quaterniond &Q);
-
+    void saveProcessTime(std::string name, double value);
     bool imuReady = false;
    //1. params
     float IMU_period_time = 0.005;

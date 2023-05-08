@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
         std_msgs
         pcl_conversions
         geometry_msgs
+        diagnostic_msgs
 )
 catkin_package(
 )

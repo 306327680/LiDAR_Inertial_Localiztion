@@ -36,12 +36,10 @@ int main(int argc, char** argv){
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1000, InitPoseCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1000);
     ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_map_Distortion", 1000);
-    ros::Publisher LiDAR_deskew_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_deskew", 1000);
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1000);
-    ros::Publisher Local_map_velodyne = nh.advertise<sensor_msgs::PointCloud2>("/local_map_velodyne", 1000);
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1000);
     ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1000);
-    ros::Publisher pubImuPath = nh.advertise<nav_msgs::Path>    ("imu/path", 1);
+    ros::Publisher Time_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>    ("/Time_cost", 1);
     if(debug){
         LM.T_map.setIdentity();
         LM.extrinsicRot.setZero();//(1, 0, 0, 0, -1, 0, 0, 0, -1);
@@ -67,14 +65,13 @@ int main(int argc, char** argv){
     while(ros::ok()){
         if(LM.newLiDAR){
             LM.process();
-            //map_pub.publish(LM.mls_map);
+            map_pub.publish(LM.mls_map);
             LiDAR_pub.publish(LM.LiDAR_Map);
             Local_map_pub.publish(LM.LocalMapPC2);
             odom_pub.publish(LM.LiDAR_map);
             Imu_LiDAR_pub.publish(LM.LiDAR_at_IMU_Time);
-            //LiDAR_deskew_pub.publish(LM.LiDAR_Deskew);
-            //Local_map_velodyne.publish(LM.LiDAR_Map_V);
-            //pubImuPath.publish(LM.IMU_path);
+            Time_pub.publish(LM.Time_used);
+
             LM.newLiDAR = false;
         }
         ros::spinOnce();

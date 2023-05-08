@@ -7,6 +7,8 @@
 #include "tf/LinearMath/Matrix3x3.h"
 #include "tf/transform_datatypes.h"
 #include "pcl/common/eigen.h"
+// Eigen::Affine3f to xyzrpy
+//        pcl::getTranslationAndEulerAngles(transBt, odomIncreX, odomIncreY, odomIncreZ, rollIncre, pitchIncre, yawIncre);
 Eigen::Affine3f odom2affine(nav_msgs::Odometry odom)
 {
     double x, y, z, roll, pitch, yaw;
