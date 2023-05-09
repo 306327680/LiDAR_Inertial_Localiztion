@@ -105,10 +105,10 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
         target_->push_back(temp);
 
     }
-    ICP.setMaximumIterations(75);
-    ICP.setMaxCorrespondenceDistance(3);
-    ICP.setTransformationEpsilon(0.001);
-    ICP.setEuclideanFitnessEpsilon(0.001);
+    ICP.setMaximumIterations(80);
+    ICP.setMaxCorrespondenceDistance(2.5);
+    ICP.setTransformationEpsilon(0.0000001);
+    ICP.setEuclideanFitnessEpsilon(0.00001);
     ICP.setInputSource(source);
     ICP.setInputTarget(target_);
 

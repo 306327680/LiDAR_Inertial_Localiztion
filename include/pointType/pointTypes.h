@@ -165,4 +165,21 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(ouster_ros::Point,
                                           (std::uint32_t, range, range)
 )
 
+
+//0.3 robosense
+struct mid360 {
+    PCL_ADD_POINT4D
+    PCL_ADD_INTENSITY;
+    float time;
+    uint16_t ring;
+    uint16_t tag;                     ///< laser ring number
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW // make sure our new allocators are aligned
+} EIGEN_ALIGN16;
+
+POINT_CLOUD_REGISTER_POINT_STRUCT( mid360,
+                                   (float, x, x) (float, y, y) (float, z, z) (float, intensity, intensity) (float, time, time)
+                                           (uint16_t, ring, ring) (uint16_t, tag, tag))
+typedef  mid360 midpoint;
+typedef pcl::PointCloud<RoboPoint> mid360PointCLoud;
+
 #endif //MAPPING_MULTI_THREAD_POINTTYPES_H

@@ -3,3 +3,7 @@
 //
 
 #include "IMU_preintergration_lib.h"
+
+void IMU_preintergration_lib::process() {
+
+}

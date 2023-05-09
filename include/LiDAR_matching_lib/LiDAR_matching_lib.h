@@ -30,8 +30,8 @@ public:
     void LoadNormalMap(std::string map_path);
     void process();
     //1.Input
-    sensor_msgs::PointCloud2 Point_raw;
-
+//    sensor_msgs::PointCloud2 Point_raw;
+    std::queue<sensor_msgs::PointCloud2> Point_raw_queue;
     bool InitPoseBool = false;
     bool InitPoseCome = false;
     bool newIMU = false;
@@ -56,6 +56,7 @@ public:
     //4. extric parameter
     Eigen::Matrix3d extrinsicRot;
     double time_offset = 0;
+    bool Usemid360 = false;
 private:
     void AccumulateImu();
     void InputDownSample();

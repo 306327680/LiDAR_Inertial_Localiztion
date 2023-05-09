@@ -9,7 +9,7 @@ void ImuCallback(const sensor_msgs::Imu::ConstPtr& msg){
     LM.newIMU = true;
 }
 void PointCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
-    LM.Point_raw = *msg ;
+    LM.Point_raw_queue.push(*msg);
     LM.newLiDAR = true;
 }
 void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg){
@@ -31,14 +31,14 @@ int main(int argc, char** argv){
     ros::NodeHandle nh("~");
     LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth_ds.pcd");
     ROS_WARN("Map Finish");
-    ros::Subscriber sub1 = nh.subscribe("/imu/data_raw", 1000, ImuCallback);
-    ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 1000, PointCallback);
-    ros::Subscriber sub3 = nh.subscribe("/initialpose", 1000, InitPoseCallback);
-    ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1000);
-    ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_map_Distortion", 1000);
-    ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1000);
-    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1000);
-    ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1000);
+    ros::Subscriber sub1 = nh.subscribe("/imu/data_raw", 50, ImuCallback);
+    ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 5, PointCallback);
+    ros::Subscriber sub3 = nh.subscribe("/initialpose", 1, InitPoseCallback);
+    ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1);
+    ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_map_Distortion", 1);
+    ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1);
+    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1);
+    ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1);
     ros::Publisher Time_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>    ("/Time_cost", 1);
     if(debug){
         LM.T_map.setIdentity();

@@ -15,6 +15,9 @@
 class IMU_preintergration_lib {
 public:
     IMU_preintergration_lib(){};
+    void process();
+    std::vector<sensor_msgs::Imu> IMU_buffer;
+    std::vector<nav_msgs::Odometry> Odom_buffer;
 
 private:
 };
