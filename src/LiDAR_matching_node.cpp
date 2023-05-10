@@ -40,6 +40,9 @@ int main(int argc, char** argv){
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1);
     ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1);
     ros::Publisher Time_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>    ("/Time_cost", 1);
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+
     if(debug){
         LM.T_map.setIdentity();
         LM.extrinsicRot.setZero();//(1, 0, 0, 0, -1, 0, 0, 0, -1);
@@ -71,7 +74,11 @@ int main(int argc, char** argv){
             odom_pub.publish(LM.LiDAR_map);
             Imu_LiDAR_pub.publish(LM.LiDAR_at_IMU_Time);
             Time_pub.publish(LM.Time_used);
-
+            transform.setOrigin(tf::Vector3(LM.LiDAR_map.pose.pose.position.x,LM.LiDAR_map.pose.pose.position.y,LM.LiDAR_map.pose.pose.position.z));
+            tf::Quaternion q(LM.LiDAR_map.pose.pose.orientation.x,LM.LiDAR_map.pose.pose.orientation.y,
+                             LM.LiDAR_map.pose.pose.orientation.z,LM.LiDAR_map.pose.pose.orientation.w);
+            transform.setRotation(q);
+            br.sendTransform(tf::StampedTransform(transform, LM.LiDAR_map.header.stamp, "map", "velodyne"));
             LM.newLiDAR = false;
         }
         ros::spinOnce();

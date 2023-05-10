@@ -225,7 +225,6 @@ void LiDAR_matching_lib::findRotation(double pointTime, Eigen::Quaterniond &Q)
             break;
         }
     }
-//    std::cout<<index<<" "<<pointTime-IMU_Time[index]<<std::endl;
     if(index == IMU_Time.size()-1){
         Q= IMU_q.back();
     } else{

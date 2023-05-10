@@ -7,7 +7,7 @@
 <!--        <remap from="/velodyne_points" to="/livox/lidar"/>-->
 <!--        <remap from="/imu/data_raw" to="/livox/imu"/>-->
     </node>
-    <node pkg="$(arg project)" type="IMU_Preintegration" name="IMU_Preintegration"   output="screen"  respawn="true"/>
+<!--    <node pkg="$(arg project)" type="IMU_Preintegration" name="IMU_Preintegration"   output="screen"  respawn="true"/>-->
 
 
 </launch>
