@@ -14,11 +14,12 @@ void PointCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 }
 void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg){
     LM.T_map.setIdentity();
+    LM.T_map_last.setIdentity();
     Eigen::Quaterniond q;
     q.x() = msg->pose.pose.orientation.x; q.y() = msg->pose.pose.orientation.y;
     q.z() = msg->pose.pose.orientation.z; q.w() =msg->pose.pose.orientation.w;
     LM.T_map.rotate(q.matrix()) ;
-    LM.T_map.translation()<<msg->pose.pose.position.x,msg->pose.pose.position.y,0;
+    LM.T_map.translation()<<msg->pose.pose.position.x,msg->pose.pose.position.y,msg->pose.pose.position.z;
     LM.InitPoseBool = true;
     LM.IMU_q.push_back( q  );//todo clear
     LM.IMU_Time.push_back(msg->header.stamp.toSec());
@@ -45,6 +46,7 @@ int main(int argc, char** argv){
 
     if(debug){
         LM.T_map.setIdentity();
+        LM.T_map_last.setIdentity();
         LM.extrinsicRot.setZero();//(1, 0, 0, 0, -1, 0, 0, 0, -1);
         LM.extrinsicRot(0,0) = 1;
         LM.extrinsicRot(1,1) = -1;

@@ -33,9 +33,9 @@ public:
     IMU_preintergration_lib(){
         extTrans.setZero();
         boost::shared_ptr<gtsam::PreintegrationParams> p = gtsam::PreintegrationParams::MakeSharedU(9.81);
-        p->accelerometerCovariance  = gtsam::Matrix33::Identity(3,3) * pow(3.9939570888238808e-03, 2); // acc white noise in continuous
-        p->gyroscopeCovariance      = gtsam::Matrix33::Identity(3,3) * pow(1.5636343949698187e-03  , 2); // gyro white noise in continuous
-        p->integrationCovariance    = gtsam::Matrix33::Identity(3,3) * pow(1e-4, 2); // error committed in integrating position from velocities
+        p->accelerometerCovariance  = gtsam::Matrix33::Identity(3,3) * pow(3.9939570888238808e-06, 2); // acc white noise in continuous
+        p->gyroscopeCovariance      = gtsam::Matrix33::Identity(3,3) * pow(1.5636343949698187e-08  , 2); // gyro white noise in continuous
+        p->integrationCovariance    = gtsam::Matrix33::Identity(3,3) * pow(1e-4, 2);         // error committed in integrating position from velocities
         gtsam::imuBias::ConstantBias prior_imu_bias((gtsam::Vector(6) << 0, 0, 0, 0, 0, 0).finished());; // assume zero initial bias
 
         priorPoseNoise  = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2).finished()); // rad,rad,rad,m, m, m
@@ -43,8 +43,7 @@ public:
         priorBiasNoise  = gtsam::noiseModel::Isotropic::Sigma(6, 1e-3); // 1e-2 ~ 1e-3 seems to be good
         correctionNoise = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.05, 0.05, 0.05, 0.1, 0.1, 0.1).finished()); // rad,rad,rad,m, m, m
         correctionNoise2 = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 1, 1, 1, 1, 1, 1).finished()); // rad,rad,rad,m, m, m
-        noiseModelBetweenBias = (gtsam::Vector(6) << 6.4356659353532566e-06, 6.4356659353532566e-06,
-                6.4356659353532566e-06, 3.5640318696367613e-06, 3.5640318696367613e-06, 3.5640318696367613e-06).finished();
+        noiseModelBetweenBias = (gtsam::Vector(6) << 6e-06, 6e-06, 6e-06, 3e-06, 3e-06, 3e-06).finished();
         imuIntegratorImu_ = new gtsam::PreintegratedImuMeasurements(p, prior_imu_bias); // setting up the IMU integration for IMU message thread
         imuIntegratorOpt_ = new gtsam::PreintegratedImuMeasurements(p, prior_imu_bias); // setting up the IMU integration for optimization
     }
@@ -52,15 +51,17 @@ public:
 
     void process();
     nav_msgs::Odometry odometry;
+    nav_msgs::Odometry IMU_odometry;
     std::vector<sensor_msgs::Imu> IMU_buffer;
     std::vector<sensor_msgs::Imu> repropagateIMU_buffer;
     std::vector<nav_msgs::Odometry> Odom_buffer;
 
     Eigen::Affine3f lidarOdomAffine;
     double lidarOdomTime = -1;
-    double delay = 0.0375;
+    double delay = 0;
     Eigen::Vector3d extTrans;
     bool new_LiDAR = false;
+    bool new_IMU = false;
 private:
     void resetOptimization();
     void initlizeGraph();
@@ -68,6 +69,8 @@ private:
     void integrateIMU();
     void repropagateIMU();
     bool failureDetection(const gtsam::Vector3& velCur, const gtsam::imuBias::ConstantBias& biasCur);
+    void generatePublishmsg();
+    void IMUintergation(sensor_msgs::Imu thisImu);
     bool systemInitialized = false;
     Eigen::Affine3f odom_inc;
     gtsam::Pose3 prevPose_;

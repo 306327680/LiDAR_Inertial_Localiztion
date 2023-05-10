@@ -7,17 +7,16 @@
 void IMU_preintergration_lib::process() {
     if(Odom_buffer.size()>1 && new_LiDAR){
         //calc inc
-        odom_inc = odom2affine(Odom_buffer.at(Odom_buffer.size()-1)) * odom2affine(Odom_buffer.at(Odom_buffer.size()-2)).inverse();
+        odom_inc = odom2affine(Odom_buffer.back());
 
         auto odom_last = Odom_buffer.back();
         Odom_buffer.clear();
         Odom_buffer.push_back(odom_last);
-//        std::cout<<odom_inc.matrix()<<std::endl;
+
         Eigen::Quaternionf  rotation(odom_inc.rotation());
         lidarPose = gtsam::Pose3(gtsam::Rot3::Quaternion(rotation.w(),rotation.x(),rotation.y(),rotation.z()),
                                               gtsam::Point3(odom_inc.translation().x(), odom_inc.translation().y(), odom_inc.translation().z()));
         if (systemInitialized == false){
-            prevPose_ = lidarPose.compose(lidar2Imu);
             initlizeGraph();
             return;
         }
@@ -27,32 +26,11 @@ void IMU_preintergration_lib::process() {
         }
         integrateIMU();
         repropagateIMU();
-        // integrate this single imu message
-        imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(IMU_buffer.back().linear_acceleration.x, IMU_buffer.back().linear_acceleration.y, IMU_buffer.back().linear_acceleration.z),
-                                                gtsam::Vector3(IMU_buffer.back().angular_velocity.x,    IMU_buffer.back().angular_velocity.y,    IMU_buffer.back().angular_velocity.z), 0.005);
-        // predict odometry
-        gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
-        gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
-
-        odometry.header.stamp = IMU_buffer.back().header.stamp;
-        odometry.header.frame_id ="velodyne";
-        odometry.child_frame_id = "IMU";
-        odometry.pose.pose.position.x = lidarPose.translation().x();
-        odometry.pose.pose.position.y = lidarPose.translation().y();
-        odometry.pose.pose.position.z = lidarPose.translation().z();
-        odometry.pose.pose.orientation.x = lidarPose.rotation().toQuaternion().x();
-        odometry.pose.pose.orientation.y = lidarPose.rotation().toQuaternion().y();
-        odometry.pose.pose.orientation.z = lidarPose.rotation().toQuaternion().z();
-        odometry.pose.pose.orientation.w = lidarPose.rotation().toQuaternion().w();
-
-        odometry.twist.twist.linear.x = currentState.velocity().x();
-        odometry.twist.twist.linear.y = currentState.velocity().y();
-        odometry.twist.twist.linear.z = currentState.velocity().z();
-        odometry.twist.twist.angular.x = IMU_buffer.back().angular_velocity.x + prevBiasOdom.gyroscope().x();
-        odometry.twist.twist.angular.y = IMU_buffer.back().angular_velocity.y + prevBiasOdom.gyroscope().y();
-        odometry.twist.twist.angular.z = IMU_buffer.back().angular_velocity.z + prevBiasOdom.gyroscope().z();
-        new_LiDAR = false;
-
+        generatePublishmsg();
+    }
+    if(Odom_buffer.size()!=0 && new_IMU){
+        IMUintergation(IMU_buffer.back());
+        new_IMU = false;
     }
 }
 
@@ -110,7 +88,7 @@ void IMU_preintergration_lib::resetOptimization()
     gtsam::Values NewGraphValues;
     graphValues = NewGraphValues;
 }
-
+//ok
 void IMU_preintergration_lib::initlizeGraph() {
     resetOptimization();
 
@@ -126,7 +104,7 @@ void IMU_preintergration_lib::initlizeGraph() {
     }
 
     // initial pose
-
+    prevPose_ = lidarPose.compose(lidar2Imu);
     gtsam::PriorFactor<gtsam::Pose3> priorPose(X(0), prevPose_, priorPoseNoise);
     graphFactors.add(priorPose);
     // initial velocity
@@ -160,8 +138,7 @@ void IMU_preintergration_lib::integrateIMU() {
             double dt = (lastImuT_opt < 0) ? (1.0 / 500.0) : (IMU_buffer[j].header.stamp.toSec() - lastImuT_opt);
             imuIntegratorOpt_->integrateMeasurement(
                     gtsam::Vector3(IMU_buffer[j].linear_acceleration.x, IMU_buffer[j].linear_acceleration.y, IMU_buffer[j].linear_acceleration.z),
-                    gtsam::Vector3(IMU_buffer[j].angular_velocity.x,    IMU_buffer[j].angular_velocity.y,    IMU_buffer[j].angular_velocity.z), dt);
-
+                    gtsam::Vector3(IMU_buffer[j].angular_velocity.x,    IMU_buffer[j].angular_velocity.y,    IMU_buffer[j].angular_velocity.z), 0.005);
             lastImuT_opt = IMU_buffer[j].header.stamp.toSec();
         }else{
             std::vector<sensor_msgs::Imu>  IMU_q_tmp(IMU_buffer.begin() + j,IMU_buffer.end());
@@ -196,6 +173,9 @@ void IMU_preintergration_lib::integrateIMU() {
     prevVel_   = result.at<gtsam::Vector3>(V(key));
     prevState_ = gtsam::NavState(prevPose_, prevVel_);
     prevBias_  = result.at<gtsam::imuBias::ConstantBias>(B(key));
+
+
+    std::cout<<"Bias : "<<prevBias_<<std::endl;
     // Reset the optimization preintegration object.
     imuIntegratorOpt_->resetIntegrationAndSetBias(prevBias_);
     // check optimization
@@ -260,4 +240,67 @@ void IMU_preintergration_lib::repropagateIMU() {
 
     ++key;
     doneFirstOpt = true;
+}
+
+void IMU_preintergration_lib::generatePublishmsg() {
+    // integrate this single imu message
+    imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(IMU_buffer.back().linear_acceleration.x,
+                                                           IMU_buffer.back().linear_acceleration.y, IMU_buffer.back().linear_acceleration.z),
+                                            gtsam::Vector3(IMU_buffer.back().angular_velocity.x,
+                                                           IMU_buffer.back().angular_velocity.y,    IMU_buffer.back().angular_velocity.z), 0.005);
+    // predict odometry
+    gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
+    gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
+
+    odometry.header.stamp = IMU_buffer.back().header.stamp;
+    odometry.header.frame_id ="map";
+    odometry.child_frame_id = "IMU";
+    odometry.pose.pose.position.x = imuPose.translation().x();
+    odometry.pose.pose.position.y = imuPose.translation().y();
+    odometry.pose.pose.position.z = imuPose.translation().z();
+    odometry.pose.pose.orientation.x = imuPose.rotation().toQuaternion().x();
+    odometry.pose.pose.orientation.y = imuPose.rotation().toQuaternion().y();
+    odometry.pose.pose.orientation.z = imuPose.rotation().toQuaternion().z();
+    odometry.pose.pose.orientation.w = imuPose.rotation().toQuaternion().w();
+    Eigen::Vector3d  velocity(currentState.velocity().x(),currentState.velocity().y(),currentState.velocity().z());
+    velocity = imuPose.rotation().inverse() * velocity;
+    odometry.twist.twist.linear.x = velocity.x();
+    odometry.twist.twist.linear.y = velocity.y();
+    odometry.twist.twist.linear.z = velocity.z();
+    odometry.twist.twist.angular.x = IMU_buffer.back().angular_velocity.x + prevBiasOdom.gyroscope().x();
+    odometry.twist.twist.angular.y = IMU_buffer.back().angular_velocity.y + prevBiasOdom.gyroscope().y();
+    odometry.twist.twist.angular.z = IMU_buffer.back().angular_velocity.z + prevBiasOdom.gyroscope().z();
+    new_LiDAR = false;
+}
+
+void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
+
+    // integrate this single imu message
+    imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu.linear_acceleration.x, thisImu.linear_acceleration.y, thisImu.linear_acceleration.z),
+                                            gtsam::Vector3(thisImu.angular_velocity.x,    thisImu.angular_velocity.y,    thisImu.angular_velocity.z), 0.005);
+    // predict odometry
+    gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
+    // publish odometry
+    IMU_odometry.header.stamp = thisImu.header.stamp;
+    IMU_odometry.header.frame_id = "/map";
+    IMU_odometry.child_frame_id = "/imu";
+
+    // transform imu pose to ldiar
+    gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
+    gtsam::Pose3 lidarPose = imuPose.compose(imu2Lidar);
+
+    IMU_odometry.pose.pose.position.x = lidarPose.translation().x();
+    IMU_odometry.pose.pose.position.y = lidarPose.translation().y();
+    IMU_odometry.pose.pose.position.z = lidarPose.translation().z();
+    IMU_odometry.pose.pose.orientation.x = lidarPose.rotation().toQuaternion().x();
+    IMU_odometry.pose.pose.orientation.y = lidarPose.rotation().toQuaternion().y();
+    IMU_odometry.pose.pose.orientation.z = lidarPose.rotation().toQuaternion().z();
+    IMU_odometry.pose.pose.orientation.w = lidarPose.rotation().toQuaternion().w();
+
+    IMU_odometry.twist.twist.linear.x = currentState.velocity().x();
+    IMU_odometry.twist.twist.linear.y = currentState.velocity().y();
+    IMU_odometry.twist.twist.linear.z = currentState.velocity().z();
+    IMU_odometry.twist.twist.angular.x = thisImu.angular_velocity.x + prevBiasOdom.gyroscope().x();
+    IMU_odometry.twist.twist.angular.y = thisImu.angular_velocity.y + prevBiasOdom.gyroscope().y();
+    IMU_odometry.twist.twist.angular.z = thisImu.angular_velocity.z + prevBiasOdom.gyroscope().z();
 }

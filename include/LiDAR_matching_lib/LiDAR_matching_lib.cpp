@@ -57,6 +57,7 @@ void LiDAR_matching_lib::process() {
             pcl::fromROSMsg(Point_raw_queue.front(),vlp_pcd); //untill imu queue is ok
             FrameTime = Point_raw_queue.front().header.stamp.toSec();
             Point_raw_queue.pop();
+            T_map_last = T_map;
             imuReady = false;
         }
     }
@@ -182,13 +183,15 @@ void LiDAR_matching_lib::handleMessage() {
     LiDAR_map.pose.pose.position.z = T_map.translation().z();
     Eigen::Quaterniond q;
     q = T_map.rotation();
+    auto increase =  (T_map_last.matrix().inverse())*T_map.matrix() ;
+
     LiDAR_map.pose.pose.orientation.x = q.x();
     LiDAR_map.pose.pose.orientation.y = q.y();
     LiDAR_map.pose.pose.orientation.z = q.z();
     LiDAR_map.pose.pose.orientation.w = q.w();
-    LiDAR_map.twist.twist.linear.x = icp.increase(0,3)/(FrameTime - LastFrameTime);
-    LiDAR_map.twist.twist.linear.y = icp.increase(1,3)/(FrameTime - LastFrameTime);
-    LiDAR_map.twist.twist.linear.z = icp.increase(2,3)/(FrameTime - LastFrameTime);
+    LiDAR_map.twist.twist.linear.x = increase(0,3)/(FrameTime - LastFrameTime);
+    LiDAR_map.twist.twist.linear.y = increase(1,3)/(FrameTime - LastFrameTime);
+    LiDAR_map.twist.twist.linear.z = increase(2,3)/(FrameTime - LastFrameTime);
 
     q.setIdentity();
 
@@ -198,6 +201,7 @@ void LiDAR_matching_lib::handleMessage() {
         IMU_q = IMU_q_tmp;
         IMU_Time = IMU_Time_tmp;
     }
+    T_map_last = T_map;
     LastFrameTime = FrameTime;
 }
 

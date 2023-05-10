@@ -52,6 +52,7 @@ public:
     //3.Variables
     pcl::PointCloud<pcl::PointNormal> mls_points;
     Eigen::Affine3d T_map;
+    Eigen::Affine3d T_map_last;
 
     //4. extric parameter
     Eigen::Matrix3d extrinsicRot;

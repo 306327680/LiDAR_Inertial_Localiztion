@@ -7,7 +7,7 @@
 ros::Subscriber subImuOdometry;
 ros::Subscriber subLaserOdometry;
 ros::Publisher pubImuOdometry;
-ros::Publisher pubImuPath;
+ros::Publisher pubImuIntergration;
 IMU_preintergration_lib IP;
 void lidarOdometryHandler(const nav_msgs::Odometry::ConstPtr& msg){
      IP.lidarOdomAffine = IP.odom2affine(*msg);
@@ -22,8 +22,10 @@ void imuOdometryHandler(const sensor_msgs::Imu::ConstPtr& msg){
     msg_t.angular_velocity.z = -msg_t.angular_velocity.z;
     msg_t.linear_acceleration.x = -msg_t.linear_acceleration.x ;
     msg_t.linear_acceleration.z = -msg_t.linear_acceleration.z ;
+
     IP.IMU_buffer.push_back(msg_t);
     IP.repropagateIMU_buffer.push_back(msg_t);
+    IP.new_IMU = true;
 }
 
 int main(int argc, char** argv){
@@ -33,11 +35,18 @@ int main(int argc, char** argv){
     subImuOdometry   = nh.subscribe<sensor_msgs::Imu>("/imu/data_raw",   2000,  imuOdometryHandler ,ros::TransportHints().tcpNoDelay());
 
     pubImuOdometry   = nh.advertise<nav_msgs::Odometry>("IMU_odometry", 2000);
-    pubImuPath       = nh.advertise<nav_msgs::Path>    ("IMU_odometry_path", 1);
-    ros::Rate r(200);
+    pubImuIntergration       = nh.advertise<nav_msgs::Odometry>    ("IMU_intergration", 1);
+    ros::Rate r(500);
     while(ros::ok()){
-        IP.process();
-        pubImuOdometry.publish(IP.odometry);
+        if( IP.new_LiDAR ){
+            IP.process();
+            pubImuOdometry.publish(IP.odometry);
+        }
+        if(IP.new_IMU){
+            IP.process();
+            pubImuIntergration.publish(IP.IMU_odometry);
+        }
+
         ros::spinOnce();
         r.sleep();
     }
