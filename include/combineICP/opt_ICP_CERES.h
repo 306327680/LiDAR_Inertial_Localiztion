@@ -23,14 +23,16 @@ namespace TESTICP
         int max_iterations;
         float max_coresspoind_dis;
         float trans_eps;
-        float euc_fitness_eps;
 
     private:
         CLOUD_PTR target_ptr, source_ptr;
         Eigen::Matrix4f final_pose;
 
-
         double parameters[7] = {0, 0, 0, 1, 0, 0, 0};
+        double RPY[3] =  {0, 0, 0};
+        double XYZ[3] =  {0, 0, 0};
+        Eigen::Map<Eigen::Vector3d> RPY_curr = Eigen::Map<Eigen::Vector3d>(RPY);
+        Eigen::Map<Eigen::Vector3d> XYZ_curr = Eigen::Map<Eigen::Vector3d>(XYZ);
         Eigen::Map<Eigen::Quaterniond> q_w_curr = Eigen::Map<Eigen::Quaterniond>(parameters);
         Eigen::Map<Eigen::Vector3d> t_w_curr = Eigen::Map<Eigen::Vector3d>(parameters + 4);
 
