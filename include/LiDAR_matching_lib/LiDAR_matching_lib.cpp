@@ -192,9 +192,11 @@ void LiDAR_matching_lib::handleMessage() {
     LiDAR_map.twist.twist.linear.x = increase(0,3)/(FrameTime - LastFrameTime);
     LiDAR_map.twist.twist.linear.y = increase(1,3)/(FrameTime - LastFrameTime);
     LiDAR_map.twist.twist.linear.z = increase(2,3)/(FrameTime - LastFrameTime);
+    for (int i = 0; i < icp.covariance_matrix.size(); ++i) {
+        LiDAR_map.pose.covariance[i] = icp.covariance_matrix(i);
+    }
 
     q.setIdentity();
-
     if (IMU_q.size() > 800) {
         std::vector<double> IMU_Time_tmp(IMU_Time.end()-800,IMU_Time.end());
         std::vector<Eigen::Quaterniond> IMU_q_tmp(IMU_q.end()-800,IMU_q.end());

@@ -52,6 +52,7 @@ public:
     void process();
     nav_msgs::Odometry odometry;
     nav_msgs::Odometry IMU_odometry;
+    sensor_msgs::Imu  coorected_IMU;
     std::vector<sensor_msgs::Imu> IMU_buffer;
     std::vector<sensor_msgs::Imu> repropagateIMU_buffer;
     std::vector<nav_msgs::Odometry> Odom_buffer;

@@ -23,6 +23,7 @@ namespace TESTICP
         int max_iterations;
         float max_coresspoind_dis;
         float trans_eps;
+        Eigen::Matrix<double,6,6> covariance_matrix;
 
     private:
         CLOUD_PTR target_ptr, source_ptr;

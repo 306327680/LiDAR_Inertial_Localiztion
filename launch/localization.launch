@@ -8,6 +8,6 @@
 <!--        <remap from="/imu/data_raw" to="/livox/imu"/>-->
     </node>
 <!--    <node pkg="$(arg project)" type="IMU_Preintegration" name="IMU_Preintegration"   output="screen"  respawn="true"/>-->
-
+    <node pkg="rviz" type="rviz" name="$(arg project)_rviz" args="-d $(find LiDAR_Inertia_Localiztion)/launch/rviz.rviz" />
 
 </launch>

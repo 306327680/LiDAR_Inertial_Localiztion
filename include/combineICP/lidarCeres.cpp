@@ -77,14 +77,12 @@ namespace test_ceres
 
         double imag_factor;
         double real_factor = std::cos(half_theta);
-        if (theta < 1e-10)
-        {
+        if (theta < 1e-10){
             double theta_sq = theta * theta;
             double theta_po4 = theta_sq * theta_sq;
             imag_factor = 0.5 - 0.0208333 * theta_sq + 0.000260417 * theta_po4;
         }
-        else
-        {
+        else{
             double sin_half_theta = sin(half_theta);
             imag_factor = sin_half_theta / theta;
         }
@@ -93,8 +91,7 @@ namespace test_ceres
         Eigen::Matrix3d J;
         if (theta < 1e-10)
             J = q.matrix();
-        else
-        {
+        else{
             Eigen::Matrix3d Omega2 = Omega * Omega;
             J = (Eigen::Matrix3d::Identity() + (1 - std::cos(theta)) / (theta * theta) * Omega + (theta - std::sin(theta)) / (std::pow(theta, 3)) * Omega2);
         }

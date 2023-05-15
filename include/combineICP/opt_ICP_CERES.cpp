@@ -33,7 +33,8 @@ namespace TESTICP
         q_w_curr = Eigen::Quaterniond(T.block<3, 3>(0, 0));
         RPY_curr = q_w_curr.toRotationMatrix().eulerAngles(0, 1, 2);
         t_w_curr = T.block<3, 1>(0, 3);
-
+        covariance_matrix.setZero();
+        double covariance_xx[7 * 7];
         for (int i = 0; i < max_iterations; ++i)
         {
             pcl::transformPointCloud(*source_ptr, *transform_cloud, T);
@@ -52,13 +53,10 @@ namespace TESTICP
                 kdtree_flann->nearestKSearch(transform_pt, 1, indices, res_dis);
                 if (res_dis.front() > max_coresspoind_dis)
                     continue;
-
                 Eigen::Vector3d nearest_pt = Eigen::Vector3d(target_ptr->at(indices.front()).x,
                                                              target_ptr->at(indices.front()).y,
                                                              target_ptr->at(indices.front()).z);
-
                 Eigen::Vector3d origin_eigen(origin_pt.x, origin_pt.y, origin_pt.z);
-
                 ceres::CostFunction *cost_function = new test_ceres::EdgeAnalyticCostFuntion(origin_eigen, nearest_pt);
                 problem.AddResidualBlock(cost_function, loss_function, parameters);
             }
@@ -71,38 +69,33 @@ namespace TESTICP
             options.gradient_check_relative_precision = 0.0001;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
-            //cov
-            ceres::Covariance::Options options_c;
-            ceres::Covariance covariance(options_c);
-            std::vector<std::pair<const double*, const double*> > covariance_blocks;
-            covariance_blocks.push_back(std::make_pair(parameters,parameters));
 
-            CHECK(covariance.Compute(covariance_blocks, &problem));
-
-            double covariance_xx[7 * 7];
-            covariance.GetCovarianceBlock(parameters, parameters, covariance_xx);
-            //end conv
             T.setIdentity();
             T.block<3, 1>(0, 3) = t_w_curr;
             T.block<3, 3>(0, 0) = q_w_curr.toRotationMatrix();
             double diff = sqrt((T*T_last.inverse())(0,3)*(T*T_last.inverse())(0,3) +
                     (T*T_last.inverse())(1,3)*(T*T_last.inverse())(1,3) +
                     (T*T_last.inverse())(2,3)*(T*T_last.inverse())(2,3));
-            if(diff<trans_eps){
+            if(diff<trans_eps || i == max_iterations-1){
                 std::cout<<"inter times: "<<i<<" error: "<<diff<<std::endl;
-                for (int j = 0; j < 7; ++j) {
-                    for (int k = 0; k < 7; ++k) {
-                        std::cout<<covariance_xx[j*7+k]<<" ";
-                    }
-                    std::cout<<std::endl;
-                }
-
+                //cov
+                ceres::Covariance::Options options_c;
+                ceres::Covariance covariance(options_c);
+                std::vector<std::pair<const double*, const double*> > covariance_blocks;
+                covariance_blocks.push_back(std::make_pair(parameters,parameters));
+                CHECK(covariance.Compute(covariance_blocks, &problem));
+                covariance.GetCovarianceBlock(parameters, parameters, covariance_xx);
+                //end conv
                 break;
             }else{
                 T_last = T;
             }
         }
-
+        for (int j = 0; j < 6; ++j) {
+            for (int k = 0; k < 6; ++k) {
+                covariance_matrix(j,k) = covariance_xx[j*7+k];
+            }
+        }
         final_pose = T.cast<float>();
         result_pose = T.cast<float>();
         pcl::transformPointCloud(*source_ptr, *transformed_source_ptr, result_pose);

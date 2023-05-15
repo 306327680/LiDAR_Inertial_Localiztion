@@ -17,19 +17,19 @@ void IMU_preintergration_lib::process() {
         lidarPose = gtsam::Pose3(gtsam::Rot3::Quaternion(rotation.w(),rotation.x(),rotation.y(),rotation.z()),
                                               gtsam::Point3(odom_inc.translation().x(), odom_inc.translation().y(), odom_inc.translation().z()));
         if (systemInitialized == false){
-            initlizeGraph();
+            initlizeGraph();//1.
             return;
         }
         // reset graph for speed
         if (key == 100){
-            restGraph();
+            restGraph();//2.
         }
-        integrateIMU();
-        repropagateIMU();
-        generatePublishmsg();
+        integrateIMU();//3/
+        repropagateIMU();//4.
+        generatePublishmsg();//5.
     }
     if(Odom_buffer.size()!=0 && new_IMU){
-        IMUintergation(IMU_buffer.back());
+        IMUintergation(IMU_buffer.back());//6
         new_IMU = false;
     }
 }
@@ -284,10 +284,29 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     IMU_odometry.header.stamp = thisImu.header.stamp;
     IMU_odometry.header.frame_id = "/map";
     IMU_odometry.child_frame_id = "/imu";
-
+    coorected_IMU = thisImu;
+    gtsam::Vector3 accel(thisImu.linear_acceleration.x,
+                  thisImu.linear_acceleration.y,
+                  thisImu.linear_acceleration.z);
+    gtsam:: Vector3 omega(thisImu.angular_velocity.x,
+                  thisImu.angular_velocity.y,
+                  thisImu.angular_velocity.z);
     // transform imu pose to ldiar
     gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
     gtsam::Pose3 lidarPose = imuPose.compose(imu2Lidar);
+    auto g =lidarPose.rotation().toQuaternion().matrix().inverse() * imuIntegratorImu_->p().getGravity().matrix() ;
+    std::cout<<"g: "<<g.transpose()<<std::endl;
+    accel = accel + g + prevBiasOdom.accelerometer();
+    std::cout<<"accel: "<<accel.transpose()<<std::endl;
+    omega = omega + prevBiasOdom.gyroscope() ;
+    coorected_IMU.header.frame_id = "velodyne";
+    coorected_IMU.angular_velocity.x = omega.x();
+    coorected_IMU.angular_velocity.y = omega.y();
+    coorected_IMU.angular_velocity.z = omega.z();
+    coorected_IMU.linear_acceleration.x = accel.x();
+    coorected_IMU.linear_acceleration.y = accel.y();
+    coorected_IMU.linear_acceleration.z = accel.z();
+
 
     IMU_odometry.pose.pose.position.x = lidarPose.translation().x();
     IMU_odometry.pose.pose.position.y = lidarPose.translation().y();
