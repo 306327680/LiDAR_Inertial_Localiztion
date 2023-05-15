@@ -97,6 +97,8 @@ pcl::PointCloud<pcl::PointXYZI> registration::normalIcpRegistration(pcl::PointCl
 void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCloud<pcl::PointNormal> target) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr target_(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr source_(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_source(new pcl::PointCloud<pcl::PointXYZI>);
+    Eigen::Matrix4f T;
     for (int i = 0; i < target.size(); ++i) {
         pcl::PointXYZI temp;
         temp.x = target[i].x;
@@ -105,14 +107,25 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
         target_->push_back(temp);
 
     }
-    ICP.setMaximumIterations(80);
-    ICP.setMaxCorrespondenceDistance(2.5);
-    ICP.setTransformationEpsilon(0.0000001);
-    ICP.setEuclideanFitnessEpsilon(0.00001);
-    ICP.setInputSource(source);
-    ICP.setInputTarget(target_);
+//    ICP.setMaximumIterations(80);
+//    ICP.setMaxCorrespondenceDistance(2.5);
+//    ICP.setTransformationEpsilon(0.0000001);
+//    ICP.setEuclideanFitnessEpsilon(0.00001);
+//    ICP.setInputSource(source);
+//    ICP.setInputTarget(target_);
+//
+//    ICP.align(*source_);
+//    transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
+//    increase =  ICP.getFinalTransformation();
 
-    ICP.align(*source_);
-    transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
-    increase =  ICP.getFinalTransformation();
+    TESTICP::opt_ICP_CERES ICP_ceres;
+    ICP_ceres.max_iterations = 15;
+    ICP_ceres.max_coresspoind_dis = 2.5;
+    ICP_ceres.trans_eps = 0.00000001;
+    ICP_ceres.euc_fitness_eps = 0.0000001;
+    ICP_ceres.setTargetCloud(target_);
+    ICP_ceres.scanMatch(source, Eigen::Matrix4f::Identity(), transformed_source, T);
+    transformation = T;
+    increase =  T;
+//    std::cout << T << std::endl;
 }

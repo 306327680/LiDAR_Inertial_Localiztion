@@ -11,6 +11,10 @@ find_package(GTSAM REQUIRED QUIET)
 include_directories(${GTSAM_INCLUDE_DIR})
 link_directories(${GTSAM_LIBRARY_DIRS})
 
+find_package(Ceres REQUIRED)
+include_directories(  ${CERES_INCLUDE_DIRS})
+
+
 find_package(catkin REQUIRED COMPONENTS
         roscpp
         rospy
@@ -32,8 +36,13 @@ add_library(registration
         include/registration/registration.cpp
         include/registration/registration.h
         include/pointType/pointTypes.h
-        )
+        include/combineICP/registration_interface.hpp
+        include/combineICP/cloud_data.h
+        include/combineICP/lidarCeres.cpp
+        include/combineICP/lidarCeres.h
+        include/combineICP/opt_ICP_CERES.cpp)
 target_link_libraries(registration
+        ${CERES_LIBRARIES}
         ${PCL_LIBRARIES})
 
 add_executable(LiDAR_matching src/LiDAR_matching_node.cpp include/LiDAR_matching_lib/LiDAR_matching_lib.h

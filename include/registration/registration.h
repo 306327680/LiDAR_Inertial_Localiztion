@@ -15,7 +15,7 @@
 #include <pcl/features/normal_3d_omp.h>
 #include "pointType/pointTypes.h"
 #include <pcl/surface/mls.h>
-
+#include "combineICP/opt_ICP_CERES.h"
 
 class registration {
 
