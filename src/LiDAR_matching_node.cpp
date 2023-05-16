@@ -20,6 +20,7 @@ void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& 
     q.z() = msg->pose.pose.orientation.z; q.w() =msg->pose.pose.orientation.w;
     LM.T_map.rotate(q.matrix()) ;
     LM.T_map.translation()<<msg->pose.pose.position.x,msg->pose.pose.position.y,msg->pose.pose.position.z;
+    LM.IMU_p.push_back(Eigen::Vector3d(msg->pose.pose.position.x,msg->pose.pose.position.y,msg->pose.pose.position.z));
     LM.InitPoseBool = true;
     LM.IMU_q.push_back( q  );//todo clear
     LM.IMU_Time.push_back(msg->header.stamp.toSec());
@@ -32,7 +33,7 @@ int main(int argc, char** argv){
     ros::NodeHandle nh("~");
     LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth_ds.pcd");
     ROS_WARN("Map Finish");
-    ros::Subscriber sub1 = nh.subscribe("/imu/data_raw", 50, ImuCallback);
+    ros::Subscriber sub1 = nh.subscribe("/IMU_preintergration/Imu_corrected", 50, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 5, PointCallback);
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1, InitPoseCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1);
@@ -47,8 +48,8 @@ int main(int argc, char** argv){
         LM.T_map_last.setIdentity();
         LM.extrinsicRot.setZero();//(1, 0, 0, 0, -1, 0, 0, 0, -1);
         LM.extrinsicRot(0,0) = 1;
-        LM.extrinsicRot(1,1) = -1;
-        LM.extrinsicRot(2,2) = -1;
+        LM.extrinsicRot(1,1) = 1;
+        LM.extrinsicRot(2,2) = 1;
         Eigen::Quaterniond q;
         //start
         q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
@@ -58,8 +59,13 @@ int main(int argc, char** argv){
 //        q.x() = 0.0108444616199; q.y() = -0.12032815069; q.z() = -0.151517733932; q.w() =0.981043279171;
 //        LM.T_map.rotate(q.matrix()) ;
 //        LM.T_map.translation()<<271.907041259,427.126210513,0;
+//        q.x() = 0.0512057840824; q.y() = -0.0337182208896; q.z() =-0.701510906219; q.w() = 0.710016489029;
+//        q.normalize();
+//        LM.T_map.rotate(q.matrix()) ;
+//        LM.T_map.translation()<<513.2,-30.4,0;
 
         LM.IMU_q.push_back( q );//todo clear
+        LM.IMU_p.push_back(LM.T_map.translation());
         LM.IMU_Time.push_back(0);
         LM.InitPoseBool = true;
     }

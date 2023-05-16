@@ -62,11 +62,11 @@ namespace TESTICP
             }
             ceres::Solver::Options options;
             options.linear_solver_type = ceres::DENSE_QR;
-            options.max_num_iterations = 5;
+            options.max_num_iterations = 10;
             options.minimizer_progress_to_stdout = false;
             options.check_gradients = false;
             options.num_threads = 4;
-            options.gradient_check_relative_precision = 0.0001;
+            options.gradient_check_relative_precision = trans_eps;
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
 

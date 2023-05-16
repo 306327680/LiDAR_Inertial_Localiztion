@@ -28,10 +28,6 @@ void IMU_preintergration_lib::process() {
         repropagateIMU();//4.
         generatePublishmsg();//5.
     }
-    if(Odom_buffer.size()!=0 && new_IMU){
-        IMUintergation(IMU_buffer.back());//6
-        new_IMU = false;
-    }
 }
 
 Eigen::Affine3f IMU_preintergration_lib::odom2affine(nav_msgs::Odometry odom) {
@@ -307,6 +303,9 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     coorected_IMU.linear_acceleration.y = accel.y();
     coorected_IMU.linear_acceleration.z = accel.z();
 
+    coorected_IMU.linear_acceleration_covariance[0]= currentState.velocity().x();
+    coorected_IMU.linear_acceleration_covariance[1]= currentState.velocity().y();
+    coorected_IMU.linear_acceleration_covariance[2]= currentState.velocity().z();
 
     IMU_odometry.pose.pose.position.x = lidarPose.translation().x();
     IMU_odometry.pose.pose.position.y = lidarPose.translation().y();
@@ -315,6 +314,7 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     IMU_odometry.pose.pose.orientation.y = lidarPose.rotation().toQuaternion().y();
     IMU_odometry.pose.pose.orientation.z = lidarPose.rotation().toQuaternion().z();
     IMU_odometry.pose.pose.orientation.w = lidarPose.rotation().toQuaternion().w();
+    coorected_IMU.orientation = IMU_odometry.pose.pose.orientation;
 
     IMU_odometry.twist.twist.linear.x = currentState.velocity().x();
     IMU_odometry.twist.twist.linear.y = currentState.velocity().y();

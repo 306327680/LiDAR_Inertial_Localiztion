@@ -48,7 +48,7 @@ public:
         imuIntegratorOpt_ = new gtsam::PreintegratedImuMeasurements(p, prior_imu_bias); // setting up the IMU integration for optimization
     }
     Eigen::Affine3f odom2affine(nav_msgs::Odometry odom);
-
+    void IMUintergation(sensor_msgs::Imu thisImu);
     void process();
     nav_msgs::Odometry odometry;
     nav_msgs::Odometry IMU_odometry;
@@ -71,7 +71,7 @@ private:
     void repropagateIMU();
     bool failureDetection(const gtsam::Vector3& velCur, const gtsam::imuBias::ConstantBias& biasCur);
     void generatePublishmsg();
-    void IMUintergation(sensor_msgs::Imu thisImu);
+
     bool systemInitialized = false;
     Eigen::Affine3f odom_inc;
     gtsam::Pose3 prevPose_;

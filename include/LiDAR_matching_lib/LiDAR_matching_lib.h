@@ -18,6 +18,7 @@
 #include <pcl/surface/mls.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/search/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include "pointType/pointTypes.h"
 #include <registration/registration.h>
 #include <pcl/filters/voxel_grid.h>
@@ -39,6 +40,7 @@ public:
     std::vector<sensor_msgs::Imu> ImuQueue;
     std::vector<double> IMU_Time;
     std::vector<Eigen::Quaterniond> IMU_q;
+    std::vector<Eigen::Vector3d> IMU_p;
     //2.Output
     pcl::PointCloud<pcl::PointNormal> LocalMap;
     sensor_msgs::PointCloud2 LocalMapPC2;
@@ -52,6 +54,7 @@ public:
     //3.Variables
     pcl::PointCloud<pcl::PointNormal> mls_points;
     Eigen::Affine3d T_map;
+    Eigen::Affine3d T_IMU_predict;
     Eigen::Affine3d T_map_last;
 
     //4. extric parameter
@@ -68,13 +71,14 @@ private:
                     pcl::PointCloud<pcl::PointNormal> target);
     void handleMessage();
     void findRotation(double pointTime, Eigen::Quaterniond &Q);
+    void findTrans(double pointTime, Eigen::Vector3d &T);
     void saveProcessTime(std::string name, double value);
     bool imuReady = false;
    //1. params
     float IMU_period_time = 0.005;
     Eigen::Vector3d gyro_last;
     Eigen::Quaterniond IMU_predict_q;
-    pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree;
+    pcl::KdTreeFLANN<pcl::PointNormal>::Ptr kdtree;
     pcl::PointCloud<VLPPoint> vlp_pcd;
     pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;
     pcl::VoxelGrid<pcl::PointXYZI> sor;

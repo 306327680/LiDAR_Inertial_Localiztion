@@ -34,6 +34,7 @@ public:
              pcl::PointCloud<pcl::PointNormal> target);
 	Eigen::Matrix4f transform_frame_to_frame = Eigen::Matrix4f::Identity();
 	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity(); //全局位姿
+    Eigen::Matrix4f initialPose = Eigen::Matrix4f::Identity();;
 	Eigen::Matrix4f icp_init = Eigen::Matrix4f::Identity();//icp的初值
 	Eigen::Matrix4f increase = Eigen::Matrix4f::Identity();//两次icp的结果
     Eigen::Matrix<double,6,6> covariance_matrix;
