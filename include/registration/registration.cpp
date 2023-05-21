@@ -119,8 +119,8 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
 //    increase =  ICP.getFinalTransformation();
 
     TESTICP::opt_ICP_CERES ICP_ceres;
-    ICP_ceres.max_iterations = 10;
-    ICP_ceres.max_coresspoind_dis = 1.5;
+    ICP_ceres.max_iterations = 15;
+    ICP_ceres.max_coresspoind_dis = 2;
     ICP_ceres.trans_eps = 0.0002;
     ICP_ceres.setTargetCloud(target_);
     ICP_ceres.scanMatch(source, Eigen::Matrix4f::Identity(), transformed_source, T);

@@ -171,7 +171,7 @@ void IMU_preintergration_lib::integrateIMU() {
     prevBias_  = result.at<gtsam::imuBias::ConstantBias>(B(key));
 
 
-    std::cout<<"Bias : "<<prevBias_<<std::endl;
+    std::cout<<"Bias : "<<prevBias_<<" vel: "<<prevVel_.transpose()<<std::endl;
     // Reset the optimization preintegration object.
     imuIntegratorOpt_->resetIntegrationAndSetBias(prevBias_);
     // check optimization
@@ -291,9 +291,9 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
     gtsam::Pose3 lidarPose = imuPose.compose(imu2Lidar);
     auto g =lidarPose.rotation().toQuaternion().matrix().inverse() * imuIntegratorImu_->p().getGravity().matrix() ;
-    std::cout<<"g: "<<g.transpose()<<std::endl;
+//    std::cout<<"g: "<<g.transpose()<<std::endl;
     accel = accel + g + prevBiasOdom.accelerometer();
-    std::cout<<"accel: "<<accel.transpose()<<std::endl;
+//    std::cout<<"accel: "<<accel.transpose()<<std::endl;
     omega = omega + prevBiasOdom.gyroscope() ;
     coorected_IMU.header.frame_id = "velodyne";
     coorected_IMU.angular_velocity.x = omega.x();

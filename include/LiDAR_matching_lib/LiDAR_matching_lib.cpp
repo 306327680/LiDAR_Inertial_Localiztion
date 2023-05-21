@@ -158,7 +158,7 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time, double last_poin
             T_map = T_map.translate(q_last.matrix().inverse()*(p_init-p_last));
         }
 
-        std::cout<<"last: delta P: " << Eigen::Vector3d (icp.increase(0,3),icp.increase(1,3),icp.increase(2,3)).transpose();
+//        std::cout<<"IMU predict trans: : " << (q_last.matrix().inverse()*(p_init-p_last)).transpose();
         LiDAR_at_IMU_Time.header.stamp = ros::Time(FrameTime);
         LiDAR_at_IMU_Time.header.frame_id = "/map";
         LiDAR_at_IMU_Time.pose.pose.orientation.x = q_init.x();
@@ -340,7 +340,7 @@ void LiDAR_matching_lib::AccumulateImu() {
         acc[0] = ImuQueue[i].linear_acceleration.x;
         acc[1] = ImuQueue[i].linear_acceleration.y;
         acc[2] = ImuQueue[i].linear_acceleration.z;
-        vel[0] = ImuQueue[i].linear_acceleration_covariance[0];
+        vel[0] = ImuQueue[i].linear_acceleration_covariance[0]; //todo velocity under map
         vel[1] = ImuQueue[i].linear_acceleration_covariance[1];
         vel[2] = ImuQueue[i].linear_acceleration_covariance[2];
         Eigen::Quaterniond dq;
