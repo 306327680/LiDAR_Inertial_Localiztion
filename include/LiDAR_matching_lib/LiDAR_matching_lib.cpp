@@ -160,7 +160,7 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time, double last_poin
 
 //        std::cout<<"IMU predict trans: : " << (q_last.matrix().inverse()*(p_init-p_last)).transpose();
         LiDAR_at_IMU_Time.header.stamp = ros::Time(FrameTime);
-        LiDAR_at_IMU_Time.header.frame_id = "/map";
+        LiDAR_at_IMU_Time.header.frame_id = "map";
         LiDAR_at_IMU_Time.pose.pose.orientation.x = q_init.x();
         LiDAR_at_IMU_Time.pose.pose.orientation.y = q_init.y();
         LiDAR_at_IMU_Time.pose.pose.orientation.z = q_init.z();
@@ -192,17 +192,17 @@ void LiDAR_matching_lib::handleMessage() {
     pcl::toPCLPointCloud2(Transfer_local_point, pcl_frame);
     pcl_conversions::fromPCL(pcl_frame, LiDAR_Map);
     LiDAR_Map.header = Point_raw_queue.front().header;
-    LiDAR_Map.header.frame_id = "/map";
+    LiDAR_Map.header.frame_id = "map";
 
 
     pcl::toPCLPointCloud2(LocalMap, pcl_frame);
     pcl_conversions::fromPCL(pcl_frame, LocalMapPC2);
     LocalMapPC2.header.stamp = Point_raw_queue.front().header.stamp;
-    LocalMapPC2.header.frame_id = "/map";
+    LocalMapPC2.header.frame_id = "map";
 
 
     LiDAR_map.header.stamp = Point_raw_queue.front().header.stamp;
-    LiDAR_map.header.frame_id = "/map";
+    LiDAR_map.header.frame_id = "map";
     LiDAR_map.pose.pose.position.x = T_map.translation().x();
     LiDAR_map.pose.pose.position.y = T_map.translation().y();
     LiDAR_map.pose.pose.position.z = T_map.translation().z();
@@ -363,7 +363,7 @@ void LiDAR_matching_lib::AccumulateImu() {
         }
         Eigen::Vector3d acc_w = IMU_q.back() * (acc);
         dp = IMU_p.back() + vel *  IMU_period_time + 0.5 * IMU_period_time * IMU_period_time * acc_w;
-        IMU_p.push_back(dp);
+        IMU_p.push_back( Eigen::Vector3d::Zero());
         IMU_Time.push_back(ImuQueue[i].header.stamp.toSec());
     }
     ImuQueue.clear();

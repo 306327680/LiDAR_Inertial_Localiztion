@@ -278,8 +278,8 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
     // publish odometry
     IMU_odometry.header.stamp = thisImu.header.stamp;
-    IMU_odometry.header.frame_id = "/map";
-    IMU_odometry.child_frame_id = "/imu";
+    IMU_odometry.header.frame_id = "map";
+//    IMU_odometry.child_frame_id = "imu";
     coorected_IMU = thisImu;
     gtsam::Vector3 accel(thisImu.linear_acceleration.x,
                   thisImu.linear_acceleration.y,
@@ -290,7 +290,7 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     // transform imu pose to ldiar
     gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
     gtsam::Pose3 lidarPose = imuPose.compose(imu2Lidar);
-    auto g =lidarPose.rotation().toQuaternion().matrix().inverse() * imuIntegratorImu_->p().getGravity().matrix() ;
+    auto g = lidarPose.rotation().matrix().inverse() * imuIntegratorImu_->p().getGravity().matrix() ;
 //    std::cout<<"g: "<<g.transpose()<<std::endl;
     accel = accel + g + prevBiasOdom.accelerometer();
 //    std::cout<<"accel: "<<accel.transpose()<<std::endl;
