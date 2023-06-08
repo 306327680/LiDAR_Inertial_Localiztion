@@ -36,11 +36,8 @@ add_library(registration
         include/registration/registration.cpp
         include/registration/registration.h
         include/pointType/pointTypes.h
-        include/combineICP/registration_interface.hpp
-        include/combineICP/cloud_data.h
-        include/combineICP/lidarCeres.cpp
-        include/combineICP/lidarCeres.h
-        include/combineICP/opt_ICP_CERES.cpp)
+        include/IMULiDARicp/imuLiDARicp.cpp
+        include/IMULiDARicp/imuLiDARicp.h)
 target_link_libraries(registration
         ${CERES_LIBRARIES}
         ${PCL_LIBRARIES})

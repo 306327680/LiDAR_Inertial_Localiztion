@@ -72,18 +72,16 @@ void LiDAR_matching_lib::process() {
 }
 
 void LiDAR_matching_lib::LoadNormalMap(std::string map_path) {
-    kdtree.reset(new pcl::KdTreeFLANN<pcl::PointNormal>());
 
     pcl::PCLPointCloud2 pcl_frame;
     pcl::PointCloud<pcl::PointNormal>::Ptr mls_ptr(new pcl::PointCloud<pcl::PointNormal>);
     pcl::io::loadPCDFile(map_path, mls_points);
-
     pcl::toPCLPointCloud2(mls_points, pcl_frame);
     pcl_conversions::fromPCL(pcl_frame, mls_map);
     mls_map.header.stamp = ros::Time::now();
     mls_map.header.frame_id = "map";
     *mls_ptr = mls_points;
-    kdtree->setInputCloud(mls_ptr);
+    kdtree.setInputCloud(mls_ptr);
     T_map.setIdentity();
     icp.SetNormalICP();
     gyro_last.setZero();
@@ -91,7 +89,7 @@ void LiDAR_matching_lib::LoadNormalMap(std::string map_path) {
 }
 
 void LiDAR_matching_lib::LoadMap(std::string map_path) {
-    kdtree.reset(new pcl::KdTreeFLANN<pcl::PointNormal>());
+//    kdtree.reset(new pcl::KdTreeFLANN<pcl::PointNormal>());
 
     pcl::PCLPointCloud2 pcl_frame;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -111,7 +109,7 @@ void LiDAR_matching_lib::LoadMap(std::string map_path) {
     mls_map.header.stamp = ros::Time::now();
     mls_map.header.frame_id = "map";
     *mls_ptr = mls_points;
-    kdtree->setInputCloud(mls_ptr);
+    kdtree.setInputCloud(mls_ptr);
     T_map.setIdentity();
     T_IMU_predict.setIdentity();
     icp.SetNormalICP();
@@ -140,7 +138,7 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time, double last_poin
 //                                                                                     icp.increase(1, 3),
 //                                                                                     icp.increase(2, 3)) *
 //                                                                     (vlp_ds_pcd[i].intensity) * 10;//10hz
-            point = q_init.matrix().inverse() * q.matrix() *  point + q_init.matrix().inverse()*(p - p_init);
+            point = q_init.matrix().inverse() * q.matrix() *  point + q_init.matrix().inverse() * (p - p_init);
             vlp_ds_pcd[i].x = point.x();
             vlp_ds_pcd[i].y = point.y();
             vlp_ds_pcd[i].z = point.z();
@@ -217,6 +215,10 @@ void LiDAR_matching_lib::handleMessage() {
     LiDAR_map.twist.twist.linear.x = increase(0, 3) / (FrameTime - LastFrameTime);
     LiDAR_map.twist.twist.linear.y = increase(1, 3) / (FrameTime - LastFrameTime);
     LiDAR_map.twist.twist.linear.z = increase(2, 3) / (FrameTime - LastFrameTime);
+    LiDAR_map.twist.twist.angular.x = icp.increase(0,3);//debug for icp result
+    LiDAR_map.twist.twist.angular.y = icp.increase(1,3);
+    LiDAR_map.twist.twist.angular.z = icp.increase(2,3);
+
     for (int i = 0; i < icp.covariance_matrix.size(); ++i) {
         LiDAR_map.pose.covariance[i] = icp.covariance_matrix(i);
     }
@@ -244,8 +246,11 @@ void LiDAR_matching_lib::InputDownSample() {
         point_xyzi.intensity = vlp_pcd[i].time;
         vlp_pcd_ds_ptr->push_back(point_xyzi);
     }
+  /*  US.setInputCloud(vlp_pcd_ds_ptr);
+    US.setRadiusSearch(2.0f);
+    US.filter(vlp_ds_pcd);*/
     sor.setInputCloud(vlp_pcd_ds_ptr);
-    sor.setLeafSize(1.5, 1.5, 0.25);
+    sor.setLeafSize(3, 3, 1.5);
     sor.filter(vlp_ds_pcd);
 }
 
@@ -305,7 +310,7 @@ void LiDAR_matching_lib::genLocalMap() {
         temp.x = point.x();
         temp.y = point.y();
         temp.z = point.z();
-        kdtree->nearestKSearch(temp, 20, indices, distances);
+        kdtree.nearestKSearch(temp, 30, indices, distances);
 //        kdtree->radiusSearch(temp, 6, indices, distances);
         for (int j = 0; j < indices.size(); ++j) {
             indices_unique.push_back(indices[j]);
@@ -363,7 +368,7 @@ void LiDAR_matching_lib::AccumulateImu() {
         }
         Eigen::Vector3d acc_w = IMU_q.back() * (acc);
         dp = IMU_p.back() + vel *  IMU_period_time + 0.5 * IMU_period_time * IMU_period_time * acc_w;
-        IMU_p.push_back( Eigen::Vector3d::Zero());
+        IMU_p.push_back( dp);
         IMU_Time.push_back(ImuQueue[i].header.stamp.toSec());
     }
     ImuQueue.clear();

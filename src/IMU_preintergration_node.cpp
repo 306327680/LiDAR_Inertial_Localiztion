@@ -42,13 +42,13 @@ void imuOdometryHandler(const sensor_msgs::Imu::ConstPtr& msg){
 }
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "IMU_preintergration");
+    ros::init(argc, argv, "imu_node");
     ros::NodeHandle nh("~");
     subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("/LiDAR_map_position", 5,  lidarOdometryHandler,ros::TransportHints().tcpNoDelay());
     subImuOdometry   = nh.subscribe<sensor_msgs::Imu>("/imu/data_raw",   2000,  imuOdometryHandler ,ros::TransportHints().tcpNoDelay());
 
     pubImuOdometry   = nh.advertise<nav_msgs::Odometry>("IMU_odometry", 2000);
-    pubImuIntergration       = nh.advertise<nav_msgs::Odometry>    ("IMU_intergration", 1);
+    pubImuIntergration = nh.advertise<nav_msgs::Odometry>    ("IMU_intergration", 1);
     pubImuCorr = nh.advertise<sensor_msgs::Imu>    ("Imu_corrected", 1);
 
 

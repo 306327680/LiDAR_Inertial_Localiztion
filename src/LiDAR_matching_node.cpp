@@ -31,9 +31,9 @@ int main(int argc, char** argv){
     std::cout<<argv[1]<<std::endl;
     LM.time_offset = std::atof(argv[1]);
     ros::NodeHandle nh("~");
-    LM.LoadNormalMap("/home/echo/bag/7720_Lidar/map/map_smooth_ds.pcd");
+    LM.LoadNormalMap("/home/echo/bag/ds.pcd");
     ROS_WARN("Map Finish");
-    ros::Subscriber sub1 = nh.subscribe("/IMU_preintergration/Imu_corrected", 50, ImuCallback);
+    ros::Subscriber sub1 = nh.subscribe("/imu_data", 50, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 5, PointCallback);
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1, InitPoseCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1);

@@ -33,8 +33,8 @@ public:
     IMU_preintergration_lib(){
         extTrans.setZero();
         boost::shared_ptr<gtsam::PreintegrationParams> p = gtsam::PreintegrationParams::MakeSharedU(9.81);
-        p->accelerometerCovariance  = gtsam::Matrix33::Identity(3,3) * pow(1e-07, 2);       // acc white noise in continuous
-        p->gyroscopeCovariance      = gtsam::Matrix33::Identity(3,3) * pow(1e-08  , 2);     // gyro white noise in continuous
+        p->accelerometerCovariance  = gtsam::Matrix33::Identity(3,3) * pow(1e-06, 2);       // acc white noise in continuous
+        p->gyroscopeCovariance      = gtsam::Matrix33::Identity(3,3) * pow(1e-07  , 2);     // gyro white noise in continuous
         p->integrationCovariance    = gtsam::Matrix33::Identity(3,3) * pow(1e-5, 2);        // error committed in integrating position from velocities
         gtsam::imuBias::ConstantBias prior_imu_bias((gtsam::Vector(6) << 0, 0, 0, 0, 0, 0).finished());; // assume zero initial bias
 

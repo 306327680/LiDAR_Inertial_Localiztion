@@ -5,9 +5,12 @@
 
     <node pkg="$(arg project)" type="LiDAR_matching" name="LiDAR_matching" output="screen" args="0.0375">
 <!--        <remap from="/velodyne_points" to="/livox/lidar"/>-->
-<!--        <remap from="/imu/data_raw" to="/livox/imu"/>-->
+       <remap from="/imu_data" to="/IMU_Preintegration/Imu_corrected"/>
     </node>
-<!--    <node pkg="$(arg project)" type="IMU_Preintegration" name="IMU_Preintegration"   output="screen"  respawn="true"/>-->
+    <node pkg="$(arg project)" type="IMU_Preintegration" name="IMU_Preintegration"   output="screen"  />
     <node pkg="rviz" type="rviz" name="$(arg project)_rviz" args="-d $(find LiDAR_Inertia_Localiztion)/launch/rviz.rviz" />
-
+ 
+    <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 map novatel_imu 100" />
+    <param name="/use_sim_time" value="true" />
+ 
 </launch>

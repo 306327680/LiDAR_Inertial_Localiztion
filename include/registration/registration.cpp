@@ -98,7 +98,7 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
     pcl::PointCloud<pcl::PointXYZI>::Ptr target_(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr source_(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed_source(new pcl::PointCloud<pcl::PointXYZI>);
-    Eigen::Matrix4f T;
+    Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
     for (int i = 0; i < target.size(); ++i) {
         pcl::PointXYZI temp;
         temp.x = target[i].x;
@@ -118,14 +118,22 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
 //    transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
 //    increase =  ICP.getFinalTransformation();
 
-    TESTICP::opt_ICP_CERES ICP_ceres;
-    ICP_ceres.max_iterations = 15;
-    ICP_ceres.max_coresspoind_dis = 2;
+    ICPSimulation ICP_IMU(*target_);
+    ICP_IMU.max_iterations = 25;
+    ICP_IMU.max_coresspoind_dis = 0.5;
+    ICP_IMU.trans_eps = 0.0002;
+    ICP_IMU.start(*source, T, T);
+    covariance_matrix = ICP_IMU.covariance_matrix;
+    transformation = T;
+    increase =  T;
+/*    TESTICP::opt_ICP_CERES ICP_ceres;
+    ICP_ceres.max_iterations = 25;
+    ICP_ceres.max_coresspoind_dis = 2.5;
     ICP_ceres.trans_eps = 0.0002;
     ICP_ceres.setTargetCloud(target_);
     ICP_ceres.scanMatch(source, Eigen::Matrix4f::Identity(), transformed_source, T);
     covariance_matrix = ICP_ceres.covariance_matrix;
     transformation = T;
-    increase =  T;
+    increase =  T;*/
 //    std::cout << T << std::endl;
 }

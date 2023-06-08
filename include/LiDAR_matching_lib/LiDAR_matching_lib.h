@@ -22,6 +22,7 @@
 #include "pointType/pointTypes.h"
 #include <registration/registration.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/keypoints/uniform_sampling.h>
 #include <nav_msgs/Path.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 class LiDAR_matching_lib {
@@ -50,6 +51,7 @@ public:
 
     nav_msgs::Odometry  LiDAR_map;
     nav_msgs::Odometry  LiDAR_at_IMU_Time;
+    nav_msgs::Odometry  ICP_adjust_error;
     sensor_msgs::PointCloud2 mls_map;
     //3.Variables
     pcl::PointCloud<pcl::PointNormal> mls_points;
@@ -78,10 +80,11 @@ private:
     float IMU_period_time = 0.005;
     Eigen::Vector3d gyro_last;
     Eigen::Quaterniond IMU_predict_q;
-    pcl::KdTreeFLANN<pcl::PointNormal>::Ptr kdtree;
+    pcl::KdTreeFLANN<pcl::PointNormal> kdtree;
     pcl::PointCloud<VLPPoint> vlp_pcd;
     pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;
     pcl::VoxelGrid<pcl::PointXYZI> sor;
+    pcl::UniformSampling<pcl::PointXYZI> US;
     std::vector<int> indices_last;
     std::vector<float> distances; // 存储近邻点对应距离的平方
     double FrameTime =0;

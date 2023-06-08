@@ -24,9 +24,11 @@ void IMU_preintergration_lib::process() {
         if (key == 100){
             restGraph();//2.
         }
-        integrateIMU();//3/
-        repropagateIMU();//4.
-        generatePublishmsg();//5.
+        if(IMU_buffer.size() !=0 && (IMU_buffer.front().header.stamp.toSec() < (Odom_buffer.back().header.stamp.toSec() - delay))){
+            integrateIMU();//3/
+            repropagateIMU();//4.
+            generatePublishmsg();//5.
+        }
     }
 }
 
@@ -129,9 +131,10 @@ void IMU_preintergration_lib::initlizeGraph() {
 
 void IMU_preintergration_lib::integrateIMU() {
     bool degenerate =  false;
+    bool has_imu=  IMU_buffer[0].header.stamp.toSec() < (Odom_buffer.back().header.stamp.toSec() - delay);;
     for (int j = 0; j < IMU_buffer.size(); ++j) {
-        if (IMU_buffer[j].header.stamp.toSec() < Odom_buffer.back().header.stamp.toSec() - delay){
-            double dt = (lastImuT_opt < 0) ? (1.0 / 500.0) : (IMU_buffer[j].header.stamp.toSec() - lastImuT_opt);
+        if (IMU_buffer[j].header.stamp.toSec() < (Odom_buffer.back().header.stamp.toSec() - delay)){
+//            double dt = (lastImuT_opt < 0) ? (1.0 / 500.0) : (IMU_buffer[j].header.stamp.toSec() - lastImuT_opt);
             imuIntegratorOpt_->integrateMeasurement(
                     gtsam::Vector3(IMU_buffer[j].linear_acceleration.x, IMU_buffer[j].linear_acceleration.y, IMU_buffer[j].linear_acceleration.z),
                     gtsam::Vector3(IMU_buffer[j].angular_velocity.x,    IMU_buffer[j].angular_velocity.y,    IMU_buffer[j].angular_velocity.z), 0.005);
@@ -150,8 +153,8 @@ void IMU_preintergration_lib::integrateIMU() {
     graphFactors.add(gtsam::BetweenFactor<gtsam::imuBias::ConstantBias>(B(key - 1), B(key), gtsam::imuBias::ConstantBias(),
                                                                         gtsam::noiseModel::Diagonal::Sigmas(sqrt(imuIntegratorOpt_->deltaTij()) * noiseModelBetweenBias)));
     // add pose factor
-    gtsam::Pose3 curPose = lidarPose.compose(lidar2Imu);
-    gtsam::PriorFactor<gtsam::Pose3> pose_factor(X(key), curPose, degenerate ? correctionNoise2 : correctionNoise);
+    gtsam::Pose3 curPose = lidarPose.compose(lidar2Imu);//ok
+    gtsam::PriorFactor<gtsam::Pose3> pose_factor(X(key), curPose,  correctionNoise);
     graphFactors.add(pose_factor);
     // insert predicted values
     gtsam::NavState propState_ = imuIntegratorOpt_->predict(prevState_, prevBias_);
@@ -171,7 +174,7 @@ void IMU_preintergration_lib::integrateIMU() {
     prevBias_  = result.at<gtsam::imuBias::ConstantBias>(B(key));
 
 
-    std::cout<<"Bias : "<<prevBias_<<" vel: "<<prevVel_.transpose()<<std::endl;
+    std::cerr<<"Bias : "<<prevBias_<<" vel: "<<prevVel_.transpose()<<std::endl;
     // Reset the optimization preintegration object.
     imuIntegratorOpt_->resetIntegrationAndSetBias(prevBias_);
     // check optimization
@@ -226,8 +229,6 @@ void IMU_preintergration_lib::repropagateIMU() {
         {
             sensor_msgs::Imu *thisImu = &repropagateIMU_buffer[i];
             double imuTime =repropagateIMU_buffer[i].header.stamp.toSec();
-            double dt = (lastImuQT < 0) ? (1.0 / 500.0) :(imuTime - lastImuQT);
-
             imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu->linear_acceleration.x, thisImu->linear_acceleration.y, thisImu->linear_acceleration.z),
                                                     gtsam::Vector3(thisImu->angular_velocity.x,    thisImu->angular_velocity.y,    thisImu->angular_velocity.z), 0.005);
             lastImuQT = imuTime;
@@ -248,9 +249,8 @@ void IMU_preintergration_lib::generatePublishmsg() {
     gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
     gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
 
-    odometry.header.stamp = IMU_buffer.back().header.stamp;
+    odometry.header.stamp = Odom_buffer.back().header.stamp;
     odometry.header.frame_id ="map";
-    odometry.child_frame_id = "IMU";
     odometry.pose.pose.position.x = imuPose.translation().x();
     odometry.pose.pose.position.y = imuPose.translation().y();
     odometry.pose.pose.position.z = imuPose.translation().z();
@@ -270,56 +270,55 @@ void IMU_preintergration_lib::generatePublishmsg() {
 }
 
 void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
-
-    // integrate this single imu message
-    imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu.linear_acceleration.x, thisImu.linear_acceleration.y, thisImu.linear_acceleration.z),
-                                            gtsam::Vector3(thisImu.angular_velocity.x,    thisImu.angular_velocity.y,    thisImu.angular_velocity.z), 0.005);
-    // predict odometry
-    gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
-    // publish odometry
-    IMU_odometry.header.stamp = thisImu.header.stamp;
-    IMU_odometry.header.frame_id = "map";
+    if(systemInitialized){
+        // integrate this single imu message
+        imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu.linear_acceleration.x, thisImu.linear_acceleration.y, thisImu.linear_acceleration.z),
+                                                gtsam::Vector3(thisImu.angular_velocity.x,    thisImu.angular_velocity.y,    thisImu.angular_velocity.z), 0.005);
+        // predict odometry
+        gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
+        // publish odometry
+        IMU_odometry.header.stamp = thisImu.header.stamp;
+        IMU_odometry.header.frame_id = "map";
 //    IMU_odometry.child_frame_id = "imu";
-    coorected_IMU = thisImu;
-    gtsam::Vector3 accel(thisImu.linear_acceleration.x,
-                  thisImu.linear_acceleration.y,
-                  thisImu.linear_acceleration.z);
-    gtsam:: Vector3 omega(thisImu.angular_velocity.x,
-                  thisImu.angular_velocity.y,
-                  thisImu.angular_velocity.z);
-    // transform imu pose to ldiar
-    gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
-    gtsam::Pose3 lidarPose = imuPose.compose(imu2Lidar);
-    auto g = lidarPose.rotation().matrix().inverse() * imuIntegratorImu_->p().getGravity().matrix() ;
-//    std::cout<<"g: "<<g.transpose()<<std::endl;
-    accel = accel + g + prevBiasOdom.accelerometer();
-//    std::cout<<"accel: "<<accel.transpose()<<std::endl;
-    omega = omega + prevBiasOdom.gyroscope() ;
-    coorected_IMU.header.frame_id = "velodyne";
-    coorected_IMU.angular_velocity.x = omega.x();
-    coorected_IMU.angular_velocity.y = omega.y();
-    coorected_IMU.angular_velocity.z = omega.z();
-    coorected_IMU.linear_acceleration.x = accel.x();
-    coorected_IMU.linear_acceleration.y = accel.y();
-    coorected_IMU.linear_acceleration.z = accel.z();
+        coorected_IMU = thisImu;
+        gtsam::Vector3 accel(thisImu.linear_acceleration.x,
+                             thisImu.linear_acceleration.y,
+                             thisImu.linear_acceleration.z);
+        gtsam:: Vector3 omega(thisImu.angular_velocity.x,
+                              thisImu.angular_velocity.y,
+                              thisImu.angular_velocity.z);
+        // transform imu pose to ldiar
+        gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
+        gtsam::Pose3 lidarPose = imuPose.compose(imu2Lidar);
+        auto g = lidarPose.rotation().matrix().inverse() * imuIntegratorImu_->p().getGravity().matrix() ;
+        accel = accel + g + prevBiasOdom.accelerometer();
+        omega = omega + prevBiasOdom.gyroscope() ;
+        coorected_IMU.header.frame_id = "velodyne";
+        coorected_IMU.angular_velocity.x = omega.x();
+        coorected_IMU.angular_velocity.y = omega.y();
+        coorected_IMU.angular_velocity.z = omega.z();
+        coorected_IMU.linear_acceleration.x = accel.x();
+        coorected_IMU.linear_acceleration.y = accel.y();
+        coorected_IMU.linear_acceleration.z = accel.z();
 
-    coorected_IMU.linear_acceleration_covariance[0]= currentState.velocity().x();
-    coorected_IMU.linear_acceleration_covariance[1]= currentState.velocity().y();
-    coorected_IMU.linear_acceleration_covariance[2]= currentState.velocity().z();
+        coorected_IMU.linear_acceleration_covariance[0]= currentState.velocity().x();
+        coorected_IMU.linear_acceleration_covariance[1]= currentState.velocity().y();
+        coorected_IMU.linear_acceleration_covariance[2]= currentState.velocity().z();
 
-    IMU_odometry.pose.pose.position.x = lidarPose.translation().x();
-    IMU_odometry.pose.pose.position.y = lidarPose.translation().y();
-    IMU_odometry.pose.pose.position.z = lidarPose.translation().z();
-    IMU_odometry.pose.pose.orientation.x = lidarPose.rotation().toQuaternion().x();
-    IMU_odometry.pose.pose.orientation.y = lidarPose.rotation().toQuaternion().y();
-    IMU_odometry.pose.pose.orientation.z = lidarPose.rotation().toQuaternion().z();
-    IMU_odometry.pose.pose.orientation.w = lidarPose.rotation().toQuaternion().w();
-    coorected_IMU.orientation = IMU_odometry.pose.pose.orientation;
+        IMU_odometry.pose.pose.position.x = lidarPose.translation().x();
+        IMU_odometry.pose.pose.position.y = lidarPose.translation().y();
+        IMU_odometry.pose.pose.position.z = lidarPose.translation().z();
+        IMU_odometry.pose.pose.orientation.x = lidarPose.rotation().toQuaternion().x();
+        IMU_odometry.pose.pose.orientation.y = lidarPose.rotation().toQuaternion().y();
+        IMU_odometry.pose.pose.orientation.z = lidarPose.rotation().toQuaternion().z();
+        IMU_odometry.pose.pose.orientation.w = lidarPose.rotation().toQuaternion().w();
+        coorected_IMU.orientation = IMU_odometry.pose.pose.orientation;
 
-    IMU_odometry.twist.twist.linear.x = currentState.velocity().x();
-    IMU_odometry.twist.twist.linear.y = currentState.velocity().y();
-    IMU_odometry.twist.twist.linear.z = currentState.velocity().z();
-    IMU_odometry.twist.twist.angular.x = thisImu.angular_velocity.x + prevBiasOdom.gyroscope().x();
-    IMU_odometry.twist.twist.angular.y = thisImu.angular_velocity.y + prevBiasOdom.gyroscope().y();
-    IMU_odometry.twist.twist.angular.z = thisImu.angular_velocity.z + prevBiasOdom.gyroscope().z();
+        IMU_odometry.twist.twist.linear.x = currentState.velocity().x();
+        IMU_odometry.twist.twist.linear.y = currentState.velocity().y();
+        IMU_odometry.twist.twist.linear.z = currentState.velocity().z();
+        IMU_odometry.twist.twist.angular.x = thisImu.angular_velocity.x + prevBiasOdom.gyroscope().x();
+        IMU_odometry.twist.twist.angular.y = thisImu.angular_velocity.y + prevBiasOdom.gyroscope().y();
+        IMU_odometry.twist.twist.angular.z = thisImu.angular_velocity.z + prevBiasOdom.gyroscope().z();
+    }
 }
