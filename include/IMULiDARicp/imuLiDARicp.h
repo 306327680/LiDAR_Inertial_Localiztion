@@ -13,10 +13,7 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random.hpp>
 
-#include <g2o/stuff/sampler.h>
-#include <g2o/core/factory.h>
 
-#include <g2o/stuff/sampler.h>
 
 #include <Eigen/Dense>
 #include <sophus/se3.hpp>

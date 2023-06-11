@@ -46,6 +46,7 @@ public:
     pcl::PointCloud<pcl::PointNormal> LocalMap;
     sensor_msgs::PointCloud2 LocalMapPC2;
     sensor_msgs::PointCloud2 LiDAR_Map;
+    nav_msgs::Path IMU_predict_path;
 
     diagnostic_msgs::DiagnosticStatus Time_used;
 

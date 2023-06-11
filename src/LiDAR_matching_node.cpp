@@ -42,7 +42,7 @@ int main(int argc, char** argv){
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1);
     ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1);
     ros::Publisher Time_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>    ("/Time_cost", 1);
-
+    ros::Publisher path_pub = nh.advertise<nav_msgs::Path>    ("/imu_distortion_path", 1);
     if(debug){
         LM.T_map.setIdentity();
         LM.T_map_last.setIdentity();
@@ -80,6 +80,7 @@ int main(int argc, char** argv){
             odom_pub.publish(LM.LiDAR_map);
             Imu_LiDAR_pub.publish(LM.LiDAR_at_IMU_Time);
             Time_pub.publish(LM.Time_used);
+            path_pub.publish(LM.IMU_predict_path);
             LM.newLiDAR = false;
         }
         ros::spinOnce();

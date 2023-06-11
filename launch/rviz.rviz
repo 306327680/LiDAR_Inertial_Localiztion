@@ -4,17 +4,20 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
+        - /Odometry1
         - /Odometry1/Odom IMU1/Shape1
         - /Odometry1/Odom lidar1/Shape1
         - /Odometry1/Odom lidar1/Covariance1
         - /Odometry1/Odom lidar1/Covariance1/Position1
         - /Odometry1/Odom lidar1/Covariance1/Orientation1
-        - /Point Cloud1/Velodyne1
-        - /Mapping1
-        - /Mapping1/localmap1
+        - /Odometry1/Odometry1
+        - /Odometry1/Odometry1/Shape1
+        - /scan1/Velodyne1
+        - /Mapping1/Map (cloud)1
         - /GT1/Shape1
       Splitter Ratio: 0.5600000023841858
-    Tree Height: 217
+    Tree Height: 2051
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Views
@@ -116,22 +119,22 @@ Visualization Manager:
               Color: 204; 51; 204
               Scale: 5
               Value: true
-            Value: true
+            Value: false
           Enabled: true
-          Keep: 10
+          Keep: 100
           Name: Odom lidar
-          Position Tolerance: 0.10000000149011612
+          Position Tolerance: 0.0010000000474974513
           Queue Size: 100
           Shape:
             Alpha: 1
-            Axes Length: 1
-            Axes Radius: 0.029999999329447746
+            Axes Length: 0.10000000149011612
+            Axes Radius: 0.08500000089406967
             Color: 255; 25; 0
             Head Length: 0.20000000298023224
             Head Radius: 0.30000001192092896
             Shaft Length: 0
             Shaft Radius: 0.20000000298023224
-            Value: Arrow
+            Value: Axes
           Topic: /LiDAR_map_position
           Unreliable: false
           Value: true
@@ -152,29 +155,29 @@ Visualization Manager:
               Scale: 1
               Value: true
             Value: true
-          Enabled: true
-          Keep: 1
+          Enabled: false
+          Keep: 100
           Name: Odometry
           Position Tolerance: 0.10000000149011612
           Queue Size: 10
           Shape:
             Alpha: 1
-            Axes Length: 4
-            Axes Radius: 0.10000000149011612
+            Axes Length: 0.30000001192092896
+            Axes Radius: 0.05000000074505806
             Color: 255; 25; 0
             Head Length: 0.30000001192092896
             Head Radius: 0.10000000149011612
             Shaft Length: 1
             Shaft Radius: 0.05000000074505806
             Value: Axes
-          Topic: /IMU_Preintegration/IMU_intergration
+          Topic: /IMU_Preintegration/IMU_odometry
           Unreliable: false
-          Value: true
+          Value: false
       Enabled: true
       Name: Odometry
     - Class: rviz/Group
       Displays:
-        - Alpha: 1
+        - Alpha: 0.800000011920929
           Autocompute Intensity Bounds: false
           Autocompute Value Bounds:
             Max Value: 6.491595268249512
@@ -183,9 +186,9 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud2
-          Color: 239; 41; 41
+          Color: 164; 0; 0
           Color Transformer: FlatColor
-          Decay Time: 10
+          Decay Time: 100
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
@@ -194,10 +197,10 @@ Visualization Manager:
           Min Intensity: 0
           Name: Velodyne
           Position Transformer: XYZ
-          Queue Size: 5
+          Queue Size: 3
           Selectable: false
-          Size (Pixels): 3
-          Size (m): 0.05000000074505806
+          Size (Pixels): 4
+          Size (m): 0.10000000149011612
           Style: Flat Squares
           Topic: /LiDAR_map_Distortion
           Unreliable: false
@@ -205,7 +208,7 @@ Visualization Manager:
           Use rainbow: true
           Value: true
       Enabled: true
-      Name: Point Cloud
+      Name: scan
     - Class: rviz/Group
       Displays:
         - Alpha: 1
@@ -217,10 +220,10 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud2
-          Color: 255; 255; 255
+          Color: 78; 154; 6
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 128
@@ -231,13 +234,13 @@ Visualization Manager:
           Queue Size: 10
           Selectable: false
           Size (Pixels): 3
-          Size (m): 0.009999999776482582
-          Style: Points
+          Size (m): 0.10000000149011612
+          Style: Flat Squares
           Topic: /map
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: false
-          Value: false
+          Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -247,10 +250,10 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud2
-          Color: 255; 255; 255
-          Color Transformer: Intensity
+          Color: 136; 138; 133
+          Color Transformer: FlatColor
           Decay Time: 10
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Min Color: 0; 0; 0
@@ -258,14 +261,14 @@ Visualization Manager:
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
-          Size (Pixels): 3
-          Size (m): 0.05000000074505806
+          Size (Pixels): 5
+          Size (m): 0.10000000149011612
           Style: Flat Squares
           Topic: /local_map
           Unreliable: false
           Use Fixed Frame: true
-          Use rainbow: true
-          Value: true
+          Use rainbow: false
+          Value: false
       Enabled: true
       Name: Mapping
     - Alpha: 1
@@ -298,21 +301,91 @@ Visualization Manager:
       Enabled: true
       Keep: 100
       Name: GT
-      Position Tolerance: 0.10000000149011612
+      Position Tolerance: 9.999999747378752e-05
       Queue Size: 100
       Shape:
         Alpha: 1
-        Axes Length: 0.30000001192092896
-        Axes Radius: 0.05000000074505806
+        Axes Length: 0.10000000149011612
+        Axes Radius: 0.029999999329447746
         Color: 114; 159; 207
         Head Length: 0.30000001192092896
         Head Radius: 0.20000000298023224
         Shaft Length: 0.30000001192092896
         Shaft Radius: 0.05000000074505806
         Value: Axes
-      Topic: /odom_100hz
+      Topic: /gt
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Cell Size: 0.10000000149011612
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: velodyne
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 10
+      Line Style: Billboards
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Queue Size: 10
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /imu_distortion_path
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 92; 53; 102
+      Color Transformer: FlatColor
+      Decay Time: 10
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: GTcloud
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 7
+      Size (m): 0.05999999865889549
+      Style: Flat Squares
+      Topic: /gt_scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -329,7 +402,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 36.45504379272461
+      Distance: 5.996953964233398
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -345,9 +418,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4703983068466187
+      Pitch: -0.0196016076952219
       Target Frame: velodyne
-      Yaw: 5.9108991622924805
+      Yaw: 0.10039858520030975
     Saved: ~
 Window Geometry:
   Displays:

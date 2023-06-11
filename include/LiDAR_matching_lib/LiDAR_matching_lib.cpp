@@ -225,9 +225,23 @@ void LiDAR_matching_lib::handleMessage() {
 
     q.setIdentity();
     if (IMU_q.size() > 800) {
+        geometry_msgs::PoseStamped odom;
+        IMU_predict_path.poses.clear();
+        IMU_predict_path.header.stamp = Point_raw_queue.front().header.stamp;
+        IMU_predict_path.header.frame_id = "map";
         std::vector<double> IMU_Time_tmp(IMU_Time.end() - 800, IMU_Time.end());
         std::vector<Eigen::Quaterniond> IMU_q_tmp(IMU_q.end() - 800, IMU_q.end());
         std::vector<Eigen::Vector3d> IMU_p_tmp(IMU_p.end() - 800, IMU_p.end());
+        for (int i = 0; i < IMU_p.size(); ++i) {
+            odom.pose.position.x = IMU_p[i][0];
+            odom.pose.position.y = IMU_p[i][1];
+            odom.pose.position.z = IMU_p[i][2];
+            odom.pose.orientation.x = IMU_q[i].x();
+            odom.pose.orientation.y = IMU_q[i].y();
+            odom.pose.orientation.z = IMU_q[i].z();
+            odom.pose.orientation.w = IMU_q[i].w();
+            IMU_predict_path.poses.push_back(odom);
+        }
         IMU_p = IMU_p_tmp;
         IMU_q = IMU_q_tmp;
         IMU_Time = IMU_Time_tmp;
@@ -310,7 +324,7 @@ void LiDAR_matching_lib::genLocalMap() {
         temp.x = point.x();
         temp.y = point.y();
         temp.z = point.z();
-        kdtree.nearestKSearch(temp, 30, indices, distances);
+        kdtree.nearestKSearch(temp, 50, indices, distances);
 //        kdtree->radiusSearch(temp, 6, indices, distances);
         for (int j = 0; j < indices.size(); ++j) {
             indices_unique.push_back(indices[j]);

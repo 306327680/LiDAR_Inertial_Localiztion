@@ -119,9 +119,9 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
 //    increase =  ICP.getFinalTransformation();
 
     ICPSimulation ICP_IMU(*target_);
-    ICP_IMU.max_iterations = 25;
-    ICP_IMU.max_coresspoind_dis = 0.5;
-    ICP_IMU.trans_eps = 0.0002;
+    ICP_IMU.max_iterations = 20;
+    ICP_IMU.max_coresspoind_dis = 2;
+    ICP_IMU.trans_eps = 0.0001;
     ICP_IMU.start(*source, T, T);
     covariance_matrix = ICP_IMU.covariance_matrix;
     transformation = T;
