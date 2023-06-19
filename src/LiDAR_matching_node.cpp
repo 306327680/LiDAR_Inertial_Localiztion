@@ -33,7 +33,7 @@ int main(int argc, char** argv){
     ros::NodeHandle nh("~");
     LM.LoadNormalMap("/home/echo/bag/ds.pcd");
     ROS_WARN("Map Finish");
-    ros::Subscriber sub1 = nh.subscribe("/imu_data", 50, ImuCallback);
+    ros::Subscriber sub1 = nh.subscribe("/imu_data", 500, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 5, PointCallback);
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1, InitPoseCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1);
@@ -41,6 +41,8 @@ int main(int argc, char** argv){
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1);
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_map_position", 1);
     ros::Publisher Imu_LiDAR_pub = nh.advertise<nav_msgs::Odometry>("/LiDAR_at_IMU_time", 1);
+    ros::Publisher all_path = nh.advertise<nav_msgs::Path>("/all_path", 1);
+    ros::Publisher imu_predict_path = nh.advertise<nav_msgs::Path>("/imu_predict_path", 1);
     ros::Publisher Time_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>    ("/Time_cost", 1);
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>    ("/imu_distortion_path", 1);
     if(debug){
@@ -81,6 +83,8 @@ int main(int argc, char** argv){
             Imu_LiDAR_pub.publish(LM.LiDAR_at_IMU_Time);
             Time_pub.publish(LM.Time_used);
             path_pub.publish(LM.IMU_predict_path);
+            all_path.publish(LM.map_path);
+            imu_predict_path.publish(LM.imu_constraint_path);
             LM.newLiDAR = false;
         }
         ros::spinOnce();

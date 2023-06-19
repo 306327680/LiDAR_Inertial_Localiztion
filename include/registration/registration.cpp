@@ -107,25 +107,25 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
         target_->push_back(temp);
 
     }
-//    ICP.setMaximumIterations(80);
-//    ICP.setMaxCorrespondenceDistance(2.5);
-//    ICP.setTransformationEpsilon(0.0000001);
-//    ICP.setEuclideanFitnessEpsilon(0.00001);
-//    ICP.setInputSource(source);
-//    ICP.setInputTarget(target_);
-//
-//    ICP.align(*source_);
-//    transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
-//    increase =  ICP.getFinalTransformation();
+    ICP.setMaximumIterations(80);
+    ICP.setMaxCorrespondenceDistance(0.5);
+    ICP.setTransformationEpsilon(0.0000001);
+    ICP.setEuclideanFitnessEpsilon(0.00001);
+    ICP.setInputSource(source);
+    ICP.setInputTarget(target_);
 
-    ICPSimulation ICP_IMU(*target_);
-    ICP_IMU.max_iterations = 20;
-    ICP_IMU.max_coresspoind_dis = 2;
-    ICP_IMU.trans_eps = 0.0001;
-    ICP_IMU.start(*source, T, T);
-    covariance_matrix = ICP_IMU.covariance_matrix;
-    transformation = T;
-    increase =  T;
+    ICP.align(*source_);
+    transformation =  ICP.getFinalTransformation();//上次结果(结果加预测)
+    increase =  ICP.getFinalTransformation();
+
+//    ICPSimulation ICP_IMU(*target_);
+//    ICP_IMU.max_iterations = 50;
+//    ICP_IMU.max_coresspoind_dis = 0.5;
+//    ICP_IMU.trans_eps = 0.00001;
+//    ICP_IMU.start(*source, T, T);
+//    covariance_matrix = ICP_IMU.covariance_matrix;
+//    transformation = T;
+//    increase =  T;
 /*    TESTICP::opt_ICP_CERES ICP_ceres;
     ICP_ceres.max_iterations = 25;
     ICP_ceres.max_coresspoind_dis = 2.5;

@@ -159,10 +159,24 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time, double last_poin
 //        std::cout<<"IMU predict trans: : " << (q_last.matrix().inverse()*(p_init-p_last)).transpose();
         LiDAR_at_IMU_Time.header.stamp = ros::Time(FrameTime);
         LiDAR_at_IMU_Time.header.frame_id = "map";
+        LiDAR_at_IMU_Time.pose.pose.position.x = p_init.x();
+        LiDAR_at_IMU_Time.pose.pose.position.y = p_init.y();
+        LiDAR_at_IMU_Time.pose.pose.position.z = p_init.z();
         LiDAR_at_IMU_Time.pose.pose.orientation.x = q_init.x();
         LiDAR_at_IMU_Time.pose.pose.orientation.y = q_init.y();
         LiDAR_at_IMU_Time.pose.pose.orientation.z = q_init.z();
         LiDAR_at_IMU_Time.pose.pose.orientation.w = q_init.w();
+        geometry_msgs::PoseStamped tmp;
+        Eigen::Quaterniond qq ;
+        qq = T_map.rotation();
+        tmp.pose.position.x = T_map.translation().x();
+        tmp.pose.position.y = T_map.translation().y();
+        tmp.pose.position.z = T_map.translation().z();
+        tmp.pose.orientation.x = qq.x();
+        tmp.pose.orientation.y = qq.y();
+        tmp.pose.orientation.z = qq.z();
+        tmp.pose.orientation.w = qq.w();
+        imu_constraint_path.poses.push_back(tmp);
     }
 }
 
@@ -222,7 +236,13 @@ void LiDAR_matching_lib::handleMessage() {
     for (int i = 0; i < icp.covariance_matrix.size(); ++i) {
         LiDAR_map.pose.covariance[i] = icp.covariance_matrix(i);
     }
+    map_path.header.stamp = Point_raw_queue.front().header.stamp;
+    map_path.header.frame_id = "map";
+    geometry_msgs::PoseStamped tmp;
+    tmp.pose = LiDAR_map.pose.pose;
+    map_path.poses.push_back(tmp);
 
+    imu_constraint_path.header = map_path.header;
     q.setIdentity();
     if (IMU_q.size() > 800) {
         geometry_msgs::PoseStamped odom;
@@ -263,8 +283,13 @@ void LiDAR_matching_lib::InputDownSample() {
   /*  US.setInputCloud(vlp_pcd_ds_ptr);
     US.setRadiusSearch(2.0f);
     US.filter(vlp_ds_pcd);*/
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor1;
+    sor1.setInputCloud(vlp_pcd_ds_ptr);
+    sor1.setMeanK(5);
+    sor1.setStddevMulThresh(1.0);
+    sor1.filter(*vlp_pcd_ds_ptr);
     sor.setInputCloud(vlp_pcd_ds_ptr);
-    sor.setLeafSize(3, 3, 1.5);
+    sor.setLeafSize(2, 2, 1);
     sor.filter(vlp_ds_pcd);
 }
 
@@ -298,7 +323,7 @@ void LiDAR_matching_lib::genLocalMap() {
     for (int i = 0; i < vlp_ds_pcd.size(); i = i + 1) {
         pcl::PointXYZI point_xyzi;
         if (sqrt(vlp_ds_pcd[i].x * vlp_ds_pcd[i].x + vlp_ds_pcd[i].y * vlp_ds_pcd[i].y +
-                 vlp_ds_pcd[i].z * vlp_ds_pcd[i].z) < 70) {
+                 vlp_ds_pcd[i].z * vlp_ds_pcd[i].z) < 32.5) {
             point_xyzi.x = vlp_ds_pcd[i].x;
             point_xyzi.y = vlp_ds_pcd[i].y;
             point_xyzi.z = vlp_ds_pcd[i].z;

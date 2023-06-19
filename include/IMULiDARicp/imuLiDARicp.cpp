@@ -11,9 +11,10 @@ bool ICPErr::Evaluate(double const *const *parameters, double *residuals, double
     auto Pj_ = T * Pi;
     Eigen::Vector3d err = Pj - Pj_;
 
-    residuals[0] = err(0);
-    residuals[1] = err(1);
-    residuals[2] = err(2);
+
+    residuals[0] = err(0)*err(0);
+    residuals[1] = err(1)*err(1);
+    residuals[2] = err(2)*err(2);
 
     Eigen::Matrix<double, 3, 6> Jac = Eigen::Matrix<double, 3, 6>::Zero();
     Jac.block<3, 3>(0, 0) = -Eigen::Matrix3d::Identity();
@@ -96,10 +97,11 @@ void ICPSimulation::start( pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Matrix4
                                                          target_ptr->at(indices.front()).z);
             Eigen::Vector3d origin_eigen(cloud[i].x, cloud[i].y, cloud[i].z);
             ceres::CostFunction *costFun = new ICPErr(origin_eigen, nearest_pt, information_);
-            problem.AddResidualBlock(costFun, new ceres::HuberLoss(0.5), se3);
+            problem.AddResidualBlock(costFun, new ceres::TrivialLoss, se3);
+            ceres::CostFunction *costFun1 = new IMUErr(IMUtrans, centerpoint, information_);
+            problem.AddResidualBlock(costFun1, new ceres::TrivialLoss, se3);
         }
-        ceres::CostFunction *costFun1 = new IMUErr(IMUtrans, centerpoint, information_);
-        problem.AddResidualBlock(costFun1, new ceres::TrivialLoss, se3);
+
         problem.SetParameterization(se3, new SE3Parameterization());
 
         ceres::Solver::Options options;
@@ -107,6 +109,7 @@ void ICPSimulation::start( pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Matrix4
         options.linear_solver_type = ceres::DENSE_NORMAL_CHOLESKY;
         options.trust_region_strategy_type = ceres::DOGLEG;
         options.minimizer_progress_to_stdout = false;
+        options.max_num_iterations = 3;
         //options.num_threads = 4;
         options.dogleg_type = ceres::SUBSPACE_DOGLEG;
         ceres::Solver::Summary summary;

@@ -19,6 +19,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 #include "pointType/pointTypes.h"
 #include <registration/registration.h>
 #include <pcl/filters/voxel_grid.h>
@@ -47,7 +48,8 @@ public:
     sensor_msgs::PointCloud2 LocalMapPC2;
     sensor_msgs::PointCloud2 LiDAR_Map;
     nav_msgs::Path IMU_predict_path;
-
+    nav_msgs::Path map_path;
+    nav_msgs::Path imu_constraint_path;
     diagnostic_msgs::DiagnosticStatus Time_used;
 
     nav_msgs::Odometry  LiDAR_map;
