@@ -289,7 +289,7 @@ void LiDAR_matching_lib::InputDownSample() {
     sor1.setStddevMulThresh(1.0);
     sor1.filter(*vlp_pcd_ds_ptr);
     sor.setInputCloud(vlp_pcd_ds_ptr);
-    sor.setLeafSize(2, 2, 1);
+    sor.setLeafSize(3, 3, 2);
     sor.filter(vlp_ds_pcd);
 }
 
@@ -323,11 +323,12 @@ void LiDAR_matching_lib::genLocalMap() {
     for (int i = 0; i < vlp_ds_pcd.size(); i = i + 1) {
         pcl::PointXYZI point_xyzi;
         if (sqrt(vlp_ds_pcd[i].x * vlp_ds_pcd[i].x + vlp_ds_pcd[i].y * vlp_ds_pcd[i].y +
-                 vlp_ds_pcd[i].z * vlp_ds_pcd[i].z) < 32.5) {
+                 vlp_ds_pcd[i].z * vlp_ds_pcd[i].z) < 40) {
             point_xyzi.x = vlp_ds_pcd[i].x;
             point_xyzi.y = vlp_ds_pcd[i].y;
             point_xyzi.z = vlp_ds_pcd[i].z;
-            point_xyzi.intensity = vlp_ds_pcd[i].intensity;
+            point_xyzi.intensity = sqrt(vlp_ds_pcd[i].x * vlp_ds_pcd[i].x + vlp_ds_pcd[i].y * vlp_ds_pcd[i].y +
+                                         vlp_ds_pcd[i].z * vlp_ds_pcd[i].z);
             vlp_pcd_range.push_back(point_xyzi);
         }
     }
@@ -349,7 +350,7 @@ void LiDAR_matching_lib::genLocalMap() {
         temp.x = point.x();
         temp.y = point.y();
         temp.z = point.z();
-        kdtree.nearestKSearch(temp, 50, indices, distances);
+        kdtree.nearestKSearch(temp, 3*ceil(vlp_pcd_range[i].intensity), indices, distances);
 //        kdtree->radiusSearch(temp, 6, indices, distances);
         for (int j = 0; j < indices.size(); ++j) {
             indices_unique.push_back(indices[j]);

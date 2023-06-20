@@ -10,8 +10,7 @@ Panels:
         - /Odometry1/Odom lidar1/Covariance1
         - /Odometry1/Odom lidar1/Covariance1/Position1
         - /Odometry1/Odom lidar1/Covariance1/Orientation1
-        - /Odometry1/Odometry1
-        - /Odometry1/Odometry1/Shape1
+        - /Odometry1/imu and lidar odom1/Shape1
         - /scan1/Velodyne1
         - /Mapping1
         - /GT1/Shape1
@@ -157,13 +156,13 @@ Visualization Manager:
             Value: true
           Enabled: true
           Keep: 100
-          Name: Odometry
+          Name: imu and lidar odom
           Position Tolerance: 0.10000000149011612
           Queue Size: 10
           Shape:
             Alpha: 1
-            Axes Length: 0.10000000149011612
-            Axes Radius: 0.05000000074505806
+            Axes Length: 0.5
+            Axes Radius: 0.019999999552965164
             Color: 255; 25; 0
             Head Length: 0.30000001192092896
             Head Radius: 0.10000000149011612
@@ -398,7 +397,7 @@ Visualization Manager:
           Length: 0.30000001192092896
           Line Style: Billboards
           Line Width: 0.029999999329447746
-          Name: after opt
+          Name: lidar localization
           Offset:
             X: 0
             Y: 0
@@ -455,7 +454,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.259341239929199
+      Distance: 5.031431674957275
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -463,17 +462,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.02044202946126461
-        Y: -0.14487406611442566
-        Z: -0.13338932394981384
+        X: -0.1443987786769867
+        Y: 0.1644728183746338
+        Z: -0.11940386146306992
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4197978973388672
+      Pitch: 0.6047974824905396
       Target Frame: velodyne
-      Yaw: 1.6192964315414429
+      Yaw: 5.031125068664551
     Saved: ~
 Window Geometry:
   Displays:
