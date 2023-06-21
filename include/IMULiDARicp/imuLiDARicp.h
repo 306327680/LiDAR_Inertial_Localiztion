@@ -119,12 +119,38 @@ struct LidarPlaneFactor
     static ceres::CostFunction *Create(const Eigen::Vector3d curr_point_, const Eigen::Vector3d target_point_,
                                        const Eigen::Vector3d ljm_norm_, const double s_)
     {
-        return (new ceres::AutoDiffCostFunction<
-                LidarPlaneFactor, 1, 4, 3>(
+        return (new ceres::AutoDiffCostFunction<LidarPlaneFactor, 1, 4, 3>(
                 new LidarPlaneFactor(curr_point_, target_point_, ljm_norm_,  s_)));
     }
 
-    Eigen::Vector3d curr_point, target_point, last_point_l, last_point_m;
+    Eigen::Vector3d curr_point, target_point ;
     Eigen::Vector3d ljm_norm;
     double s;
+};
+
+struct IMUFactor
+{
+    IMUFactor(Eigen::Vector3d curr_point_) : curr_point(curr_point_) {}
+    template <typename T>
+    bool operator()(const T *q, const T *t, T *residual) const
+    {
+        Eigen::Matrix<T, 3, 1> cp{T(curr_point.x()), T(curr_point.y()), T(curr_point.z())};
+
+        Eigen::Quaternion<T> q_last_curr{q[3], q[0], q[1], q[2]};
+        Eigen::Matrix<T, 3, 1> t_last_curr{t[0], t[1], t[2]};
+        Eigen::Matrix<T, 3, 1> lp;
+        lp = q_last_curr * cp + t_last_curr;
+
+        residual[0] = 10.0*(lp[0]*lp[0]);
+        residual[1] = 10.0*(lp[1]*lp[1]);
+        residual[2] = 10.0*(lp[2]*lp[2]);
+        residual[3] = 10.0*q[0]*q[0];
+        residual[4] = 10.0*q[1]*q[1];
+        residual[5] = 10.0*q[2]*q[2];
+        return true;
+    }
+    static ceres::CostFunction *Create(const Eigen::Vector3d curr_point_){
+        return (new ceres::AutoDiffCostFunction< IMUFactor, 6,4,3>( new IMUFactor(curr_point_)));
+    }
+    Eigen::Vector3d curr_point;
 };

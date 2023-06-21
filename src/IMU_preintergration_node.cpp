@@ -9,6 +9,8 @@ ros::Subscriber subLaserOdometry;
 ros::Publisher pubImuOdometry;
 ros::Publisher pubImuIntergration;
 ros::Publisher pubImuCorr;
+ros::Publisher pubFusionPath;
+ros::Publisher speed_pub;
 IMU_preintergration_lib IP;
 void lidarOdometryHandler(const nav_msgs::Odometry::ConstPtr& msg){
      IP.lidarOdomAffine = IP.odom2affine(*msg);
@@ -36,6 +38,13 @@ void imuOdometryHandler(const sensor_msgs::Imu::ConstPtr& msg){
     tf::Quaternion q(IP.IMU_odometry.pose.pose.orientation.x,IP.IMU_odometry.pose.pose.orientation.y,
                      IP.IMU_odometry.pose.pose.orientation.z,IP.IMU_odometry.pose.pose.orientation.w);
     transform.setRotation(q);
+    Eigen::Vector3d speed(IP.coorected_IMU.linear_acceleration_covariance[0],IP.coorected_IMU.linear_acceleration_covariance[1],IP.coorected_IMU.linear_acceleration_covariance[2]);
+    speed =  Eigen::Quaterniond(q.w(),q.x(),q.y(),q.z()).inverse().matrix() * speed ;
+    IP.speed_from_imu = IP.coorected_IMU;
+    IP.speed_from_imu.linear_acceleration.x =  speed.x();
+    IP.speed_from_imu.linear_acceleration.y =  speed.y();
+    IP.speed_from_imu.linear_acceleration.z =  speed.z();
+    speed_pub.publish(IP.speed_from_imu);
     br.sendTransform(tf::StampedTransform(transform, IP.IMU_odometry.header.stamp, "map", "velodyne"));
     //TF ok
     IP.new_IMU = true;
@@ -50,13 +59,14 @@ int main(int argc, char** argv){
     pubImuOdometry   = nh.advertise<nav_msgs::Odometry>("IMU_odometry", 2000);
     pubImuIntergration = nh.advertise<nav_msgs::Odometry>    ("IMU_intergration", 1);
     pubImuCorr = nh.advertise<sensor_msgs::Imu>    ("Imu_corrected", 1);
-
-
+    pubFusionPath = nh.advertise<nav_msgs::Path>    ("Fusion_path", 1);
+    speed_pub = nh.advertise<sensor_msgs::Imu>("/current_speed",1);
     ros::Rate r(500);
     while(ros::ok()){
         if( IP.new_LiDAR ){
             IP.process();
             pubImuOdometry.publish(IP.odometry);
+            pubFusionPath.publish(IP.Fusion_path);
         }
         ros::spinOnce();
         r.sleep();

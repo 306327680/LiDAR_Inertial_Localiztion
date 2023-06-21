@@ -9,7 +9,7 @@ void ImuCallback(const sensor_msgs::Imu::ConstPtr& msg){
     LM.newIMU = true;
 }
 void PointCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
-    LM.Point_raw_queue.push(*msg);
+    LM.Point_raw = *msg;
     LM.newLiDAR = true;
 }
 void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg){

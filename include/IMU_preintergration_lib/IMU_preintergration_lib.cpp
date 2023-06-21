@@ -266,6 +266,11 @@ void IMU_preintergration_lib::generatePublishmsg() {
     odometry.twist.twist.angular.x = IMU_buffer.back().angular_velocity.x + prevBiasOdom.gyroscope().x();
     odometry.twist.twist.angular.y = IMU_buffer.back().angular_velocity.y + prevBiasOdom.gyroscope().y();
     odometry.twist.twist.angular.z = IMU_buffer.back().angular_velocity.z + prevBiasOdom.gyroscope().z();
+
+    Fusion_path.header = odometry.header;
+    geometry_msgs::PoseStamped posepath;
+    posepath.pose = odometry.pose.pose;
+    Fusion_path.poses.push_back(posepath);
     new_LiDAR = false;
 }
 
@@ -304,6 +309,9 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
         coorected_IMU.linear_acceleration_covariance[0]= currentState.velocity().x();
         coorected_IMU.linear_acceleration_covariance[1]= currentState.velocity().y();
         coorected_IMU.linear_acceleration_covariance[2]= currentState.velocity().z();
+        coorected_IMU.linear_acceleration_covariance[3]= lidarPose.translation().x();
+        coorected_IMU.linear_acceleration_covariance[4]= lidarPose.translation().y();
+        coorected_IMU.linear_acceleration_covariance[5]= lidarPose.translation().z();
 
         IMU_odometry.pose.pose.position.x = lidarPose.translation().x();
         IMU_odometry.pose.pose.position.y = lidarPose.translation().y();

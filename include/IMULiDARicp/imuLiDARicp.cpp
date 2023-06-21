@@ -126,7 +126,7 @@ void ICPSimulation::start( pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Matrix4
         double diff = sqrt((result_pose*T_last.inverse())(0,3)*(result_pose*T_last.inverse())(0,3) +
                            (result_pose*T_last.inverse())(1,3)*(result_pose*T_last.inverse())(1,3) +
                            (result_pose*T_last.inverse())(2,3)*(result_pose*T_last.inverse())(2,3));
-        if(diff<trans_eps || i == max_iterations-1){
+        if(diff < trans_eps || i == max_iterations-1){
 //            std::cout<<"inter times: "<<i<<" error: "<<diff<<std::endl;
             //cov
             ceres::Covariance::Options options_c;
@@ -179,12 +179,14 @@ void ICPSimulation::pointPlane(pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Mat
             ceres::CostFunction *cost_function = LidarPlaneFactor::Create(source_pt, nearest_pt, pt_normal, 1);
             problem.AddResidualBlock(cost_function, new ceres::TrivialLoss, para_q, para_t);
         }
-
+        ceres::CostFunction *cost_function_imu = IMUFactor::Create(Eigen::Vector3d(0,0,0));
+        problem.AddResidualBlock(cost_function_imu, new ceres::TrivialLoss, para_q, para_t);
 
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::DENSE_QR;
-        options.max_num_iterations = 4;
+        options.max_num_iterations = 1;
         options.minimizer_progress_to_stdout = false;
+        //options.max_solver_time_in_seconds = 0.0035;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
 
@@ -203,13 +205,21 @@ void ICPSimulation::pointPlane(pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Mat
             ceres::Covariance::Options options_c;
             ceres::Covariance covariance(options_c);
             std::vector<std::pair<const double*, const double*> > covariance_blocks;
-            covariance_blocks.push_back(std::make_pair(para_t,para_t));
-            covariance_blocks.push_back(std::make_pair(para_q,para_q));
+            covariance_blocks.push_back(std::make_pair(para_t, para_t));
+            covariance_blocks.push_back(std::make_pair(para_q, para_q));
+            covariance_blocks.push_back(std::make_pair(para_t, para_q));
+
             CHECK(covariance.Compute(covariance_blocks, &problem));
-            covariance.GetCovarianceBlock(para_t, para_q, covariance_xx);
-            for (int j = 0; j < 6; ++j) {
-                for (int k = 0; k < 6; ++k) {
-                    covariance_matrix(j,k) = covariance_xx[j*6+k];
+
+            double covariance_xx[3 * 3];
+            double covariance_yy[4 * 4];
+            double covariance_xy[3 * 4];
+            covariance.GetCovarianceBlock(para_t, para_t, covariance_xx);
+            covariance.GetCovarianceBlock(para_q, para_q, covariance_yy);
+            covariance.GetCovarianceBlock(para_t, para_q, covariance_xy);
+            for (int j = 0; j < 3; ++j) {
+                for (int k = 0; k < 3; ++k) {
+                    covariance_matrix(j,k) = covariance_xx[j*3+k];
                 }
             }
             break;

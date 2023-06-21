@@ -38,7 +38,8 @@ public:
 	Eigen::Matrix4f icp_init = Eigen::Matrix4f::Identity();//icp的初值
 	Eigen::Matrix4f increase = Eigen::Matrix4f::Identity();//两次icp的结果
     Eigen::Matrix<double,6,6> covariance_matrix;
-
+    //for imu
+    Eigen::Vector3d IMU_p_latest;
 	//tools ReOrthogonalization 防止累计误差
 	Eigen::Isometry3d  ReOrthogonalization(Eigen::Isometry3d input);
 	pcl::IterativeClosestPointWithNormals<pcl::PointXYZINormal, pcl::PointXYZINormal>::Ptr pcl_plane_plane_icp;

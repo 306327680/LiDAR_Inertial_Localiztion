@@ -34,7 +34,7 @@ public:
     void process();
     //1.Input
 //    sensor_msgs::PointCloud2 Point_raw;
-    std::queue<sensor_msgs::PointCloud2> Point_raw_queue;
+    sensor_msgs::PointCloud2 Point_raw;
     bool InitPoseBool = false;
     bool InitPoseCome = false;
     bool newIMU = false;
@@ -43,6 +43,10 @@ public:
     std::vector<double> IMU_Time;
     std::vector<Eigen::Quaterniond> IMU_q;
     std::vector<Eigen::Vector3d> IMU_p;
+    std::vector<Eigen::Vector3d> IMU_v;
+    Eigen::Vector3d IMU_p_latest;
+    Eigen::Quaterniond IMU_q_latest;
+    Eigen::Affine3d IMU_pose_latest;
     //2.Output
     pcl::PointCloud<pcl::PointNormal> LocalMap;
     sensor_msgs::PointCloud2 LocalMapPC2;

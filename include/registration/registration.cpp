@@ -107,7 +107,8 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
         target_->push_back(temp);
 
     }
-/*    ICP.setMaximumIterations(80);
+/*
+    ICP.setMaximumIterations(80);
     ICP.setMaxCorrespondenceDistance(0.5);
     ICP.setTransformationEpsilon(0.0000001);
     ICP.setEuclideanFitnessEpsilon(0.00001);
@@ -120,9 +121,9 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
 
     //ICPSimulation ICP_IMU(*target_);
     ICPSimulation ICP_IMU(target);
-    ICP_IMU.max_iterations = 30;
-    ICP_IMU.max_coresspoind_dis = 1;
-    ICP_IMU.trans_eps = 0.00001;
+    ICP_IMU.max_iterations = 25;
+    ICP_IMU.max_coresspoind_dis = 0.75;
+    ICP_IMU.trans_eps = 0.0001;
     //ICP_IMU.start(*source, T, T);
     ICP_IMU.pointPlane(*source,T, T);
     covariance_matrix = ICP_IMU.covariance_matrix;
