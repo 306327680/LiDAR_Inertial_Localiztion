@@ -17,9 +17,8 @@ Panels:
         - /GT1
         - /GT1/Shape1
         - /path1
-        - /path1/lidar localization1
       Splitter Ratio: 0.4199497103691101
-    Tree Height: 396
+    Tree Height: 217
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Views
@@ -445,7 +444,7 @@ Visualization Manager:
           Enabled: true
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
+          Length: 0.10000000149011612
           Line Style: Billboards
           Line Width: 0.05000000074505806
           Name: fusion_path
@@ -491,7 +490,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 126.88399505615234
+      Distance: 18.737844467163086
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -499,17 +498,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -21.615114212036133
-        Y: -68.85757446289062
-        Z: -2.8088958263397217
+        X: -0.1646648347377777
+        Y: -0.3109360635280609
+        Z: 0.037628818303346634
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3597970008850098
+      Pitch: 0.6347976326942444
       Target Frame: velodyne
-      Yaw: 5.964450359344482
+      Yaw: 6.119454860687256
     Saved: ~
 Window Geometry:
   Displays:

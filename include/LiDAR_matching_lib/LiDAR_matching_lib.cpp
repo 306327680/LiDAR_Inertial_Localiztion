@@ -191,7 +191,7 @@ void LiDAR_matching_lib::registrion(pcl::PointCloud<pcl::PointXYZI> source,
     pcl::PointCloud<pcl::PointNormal> map_T_last;
     pcl::PointCloud<pcl::PointXYZI> local_map;
     *temp = source;
-    pcl::transformPointCloud(target, map_T_last, T_map.matrix().inverse().cast<float>());
+    pcl::transformPointCloudWithNormals(target, map_T_last, T_map.matrix().inverse().cast<float>()); //fix bug?
     icp.transformation = Eigen::Matrix4f::Identity();
     icp.initialPose =T_IMU_predict.matrix().cast<float>();
 //    icp.IMU_p_latest =   (IMU_pose_latest * T_map.inverse()).translation() ;
