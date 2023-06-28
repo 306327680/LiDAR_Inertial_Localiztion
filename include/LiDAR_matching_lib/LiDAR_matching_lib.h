@@ -4,7 +4,7 @@
 
 #ifndef LIDAR_INERTIA_LOCALIZTION_LIDAR_MATCHING_LIB_H
 #define LIDAR_INERTIA_LOCALIZTION_LIDAR_MATCHING_LIB_H
-
+#include <time.h>
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -23,6 +23,7 @@
 #include "pointType/pointTypes.h"
 #include <registration/registration.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/random_sample.h>
 #include <pcl/keypoints/uniform_sampling.h>
 #include <nav_msgs/Path.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
@@ -54,6 +55,7 @@ public:
     nav_msgs::Path IMU_predict_path;
     nav_msgs::Path map_path;
     nav_msgs::Path imu_constraint_path;
+    nav_msgs::Path gt_path;
     diagnostic_msgs::DiagnosticStatus Time_used;
 
     nav_msgs::Odometry  LiDAR_map;
@@ -92,6 +94,8 @@ private:
     pcl::PointCloud<pcl::PointXYZI> vlp_ds_pcd;
     pcl::VoxelGrid<pcl::PointXYZI> sor;
     pcl::UniformSampling<pcl::PointXYZI> US;
+    pcl::RandomSample<pcl::PointXYZI> RS;
+    pcl::RandomSample<pcl::PointNormal> RS2;
     std::vector<int> indices_last;
     std::vector<float> distances; // 存储近邻点对应距离的平方
     double FrameTime =0;

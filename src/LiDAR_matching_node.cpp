@@ -25,6 +25,13 @@ void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& 
     LM.IMU_q.push_back( q  );//todo clear
     LM.IMU_Time.push_back(msg->header.stamp.toSec());
 }
+void gtCallback(const nav_msgs::Odometry::ConstPtr& msg){
+    LM.gt_path.header = msg->header;
+    geometry_msgs::PoseStamped tmp;
+    tmp.pose = msg->pose.pose;
+    LM.gt_path.poses.push_back(tmp);
+
+}
 int main(int argc, char** argv){
     bool debug = true;
     ros::init(argc, argv, "LiDAR_matching");
@@ -36,6 +43,7 @@ int main(int argc, char** argv){
     ros::Subscriber sub1 = nh.subscribe("/imu_data", 500, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 5, PointCallback);
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1, InitPoseCallback);
+    ros::Subscriber sub4 = nh.subscribe("/gt", 1, gtCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1);
     ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_map_Distortion", 1);
     ros::Publisher Local_map_pub = nh.advertise<sensor_msgs::PointCloud2>("/local_map", 1);
@@ -45,6 +53,7 @@ int main(int argc, char** argv){
     ros::Publisher imu_predict_path = nh.advertise<nav_msgs::Path>("/imu_predict_path", 1);
     ros::Publisher Time_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>    ("/Time_cost", 1);
     ros::Publisher path_pub = nh.advertise<nav_msgs::Path>    ("/imu_distortion_path", 1);
+    ros::Publisher gt_pub = nh.advertise<nav_msgs::Path>    ("/gt_path", 1);
     if(debug){
         LM.T_map.setIdentity();
         LM.T_map_last.setIdentity();
@@ -85,6 +94,7 @@ int main(int argc, char** argv){
             path_pub.publish(LM.IMU_predict_path);
             all_path.publish(LM.map_path);
             imu_predict_path.publish(LM.imu_constraint_path);
+            gt_pub.publish( LM.gt_path);
             LM.newLiDAR = false;
         }
         ros::spinOnce();

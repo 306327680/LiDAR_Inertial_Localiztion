@@ -61,7 +61,8 @@ public:
     Eigen::Affine3f lidarOdomAffine;
     double lidarOdomTime = -1;
     double delay = 0;
-    Eigen::Vector3d extTrans = Eigen::Vector3d(0.05,0,-0.0);
+    //Eigen::Vector3d extTrans = Eigen::Vector3d(0.136246,0.0120025,-0.0343781);
+    Eigen::Vector3d extTrans = Eigen::Vector3d(0,0,0);
     bool new_LiDAR = false;
     bool new_IMU = false;
 private:

@@ -21,7 +21,7 @@ void IMU_preintergration_lib::process() {
             return;
         }
         // reset graph for speed
-        if (key == 100){
+        if (key == 20){
             restGraph();//2.
         }
         if(IMU_buffer.size() !=0 && (IMU_buffer.front().header.stamp.toSec() < (Odom_buffer.back().header.stamp.toSec() - delay))){

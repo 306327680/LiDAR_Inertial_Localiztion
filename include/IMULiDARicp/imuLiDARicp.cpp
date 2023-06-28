@@ -184,7 +184,7 @@ void ICPSimulation::pointPlane(pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Mat
 
         ceres::Solver::Options options;
         options.linear_solver_type = ceres::DENSE_QR;
-        options.max_num_iterations = 1;
+        options.max_num_iterations = 15;
         options.num_threads = 4;
         options.minimizer_progress_to_stdout = false;
         //options.max_solver_time_in_seconds = 0.0035;

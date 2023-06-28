@@ -14,11 +14,12 @@ Panels:
         - /scan1/Velodyne1
         - /Mapping1
         - /Mapping1/localmap1
-        - /GT1
         - /GT1/Shape1
         - /path1
+        - /path1/gt1
+        - /Grid2
       Splitter Ratio: 0.4199497103691101
-    Tree Height: 217
+    Tree Height: 396
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Views
@@ -249,10 +250,10 @@ Visualization Manager:
             Min Value: -10
             Value: true
           Axis: Z
-          Channel Name: intensity
+          Channel Name: normal_z
           Class: rviz/PointCloud2
           Color: 115; 210; 22
-          Color Transformer: FlatColor
+          Color Transformer: Intensity
           Decay Time: 10
           Enabled: true
           Invert Rainbow: false
@@ -264,11 +265,11 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 5
           Size (m): 0.05000000074505806
-          Style: Boxes
+          Style: Squares
           Topic: /local_map
           Unreliable: false
           Use Fixed Frame: true
-          Use rainbow: false
+          Use rainbow: true
           Value: true
       Enabled: true
       Name: Mapping
@@ -299,7 +300,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: false
-      Enabled: true
+      Enabled: false
       Keep: 1000
       Name: GT
       Position Tolerance: 9.999999974752427e-07
@@ -316,7 +317,7 @@ Visualization Manager:
         Value: Axes
       Topic: /gt
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Cell Size: 0.10000000149011612
       Class: rviz/Grid
@@ -398,7 +399,7 @@ Visualization Manager:
           Head Length: 0.20000000298023224
           Length: 0.20000000298023224
           Line Style: Billboards
-          Line Width: 0.029999999329447746
+          Line Width: 0.019999999552965164
           Name: lidar localization
           Offset:
             X: 0
@@ -417,7 +418,7 @@ Visualization Manager:
           Buffer Length: 1
           Class: rviz/Path
           Color: 204; 0; 0
-          Enabled: true
+          Enabled: false
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.10000000149011612
@@ -436,7 +437,7 @@ Visualization Manager:
           Shaft Length: 0.10000000149011612
           Topic: /imu_predict_path
           Unreliable: false
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 5
           Class: rviz/Path
@@ -446,8 +447,32 @@ Visualization Manager:
           Head Length: 0.20000000298023224
           Length: 0.10000000149011612
           Line Style: Billboards
-          Line Width: 0.05000000074505806
+          Line Width: 0.019999999552965164
           Name: fusion_path
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Queue Size: 5
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
+          Topic: /IMU_Preintegration/Fusion_path
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 204; 0; 0
+          Enabled: true
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
+          Line Style: Billboards
+          Line Width: 0.019999999552965164
+          Name: gt
           Offset:
             X: 0
             Y: 0
@@ -458,7 +483,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /IMU_Preintegration/Fusion_path
+          Topic: /gt_path
           Unreliable: false
           Value: true
       Enabled: true
@@ -472,6 +497,24 @@ Visualization Manager:
       Queue Size: 10
       Topic: /current_speed
       Unreliable: false
+      Value: false
+    - Alpha: 0.5
+      Cell Size: 0.10000000149011612
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: false
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 100000
+      Reference Frame: <Fixed Frame>
       Value: false
   Enabled: true
   Global Options:
@@ -490,7 +533,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.737844467163086
+      Distance: 40.373233795166016
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -498,17 +541,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.1646648347377777
-        Y: -0.3109360635280609
-        Z: 0.037628818303346634
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6347976326942444
+      Pitch: 0.6253989338874817
       Target Frame: velodyne
-      Yaw: 6.119454860687256
+      Yaw: 0.1572277694940567
     Saved: ~
 Window Geometry:
   Displays:
@@ -516,7 +559,7 @@ Window Geometry:
   Height: 1654
   Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000040000000000000363000005dafc0200000009fb0000001200530065006c0065006300740069006f006e000000006e00000315000000b000fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000000a0049006d006100670065000000002e000001340000000000000000fb000000100044006900730070006c006100790073000000038f000002b90000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730000000286000000a7000000b000ffffff000000010000031100000911fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000006e000009110000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b000000040fc0100000002fb0000000800540069006d00650000000000000004b00000000000000000fb0000000800540069006d0065010000000000000450000000000000000000000c00000005da00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000363000005dafc0200000009fb0000001200530065006c0065006300740069006f006e000000006e00000315000000b000fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000000a0049006d006100670065000000002e000001340000000000000000fb000000100044006900730070006c006100790073000000038f000002b90000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730000000286000000a7000000b000ffffff0000000100000311000005dafc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000006e000005da0000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b000000040fc0100000002fb0000000800540069006d00650000000000000004b00000000000000000fb0000000800540069006d0065010000000000000450000000000000000000000c00000005da00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: true
   Tool Properties:
@@ -525,4 +568,4 @@ Window Geometry:
     collapsed: true
   Width: 3072
   X: 0
-  Y: 2880
+  Y: 3456

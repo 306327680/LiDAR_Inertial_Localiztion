@@ -6,12 +6,9 @@
 
 void LiDAR_matching_lib::process() {
     //debug msg
-    ros::Time processTime;
-    ros::Time processTime_total;
-    processTime_total = ros::Time::now();
     Time_used.values.clear();
     LocalMap.clear();
-
+    auto _now_ms_total = std::chrono::high_resolution_clock ::now();
     if (InitPoseBool) {
         icp.transformation = T_map.matrix().cast<float>();
         handleMessage();
@@ -43,18 +40,29 @@ void LiDAR_matching_lib::process() {
         AccumulateImu();
         if (imuReady) {
             vlp_ds_pcd.clear();
-            processTime = ros::Time::now();
+            auto _now_ms = std::chrono::high_resolution_clock ::now();
             InputDownSample();
+            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms);
+            saveProcessTime("0. InputDownSample Time: ", duration.count()/1e9);
+
+            _now_ms = std::chrono::high_resolution_clock ::now();
             ImuDistortion(vlp_pcd.front().time, vlp_pcd.back().time); //2. Input distortion
-            saveProcessTime("1. Distortion Time: ", processTime.toSec() - ros::Time::now().toSec());
-            processTime = ros::Time::now();
+            duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms);
+            saveProcessTime("1. Distortion Time: ", duration.count()/1e9);
+
+            _now_ms = std::chrono::high_resolution_clock ::now();
             genLocalMap();
-            saveProcessTime("2. map Time: ", processTime.toSec() - ros::Time::now().toSec());
+            duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms);
+            saveProcessTime("2. map Time: ", duration.count()/1e9);
             //3. ICP
-            processTime = ros::Time::now();
+
+
+            _now_ms = std::chrono::high_resolution_clock ::now();
             registrion(vlp_ds_pcd, LocalMap);
             handleMessage();
-            saveProcessTime("3. icp Time: ", processTime.toSec() - ros::Time::now().toSec());
+            duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms);
+            saveProcessTime("3. icp Time: ", duration.count()/1e9);
+
             pcl::fromROSMsg(Point_raw, vlp_pcd); //untill imu queue is ok
             FrameTime = Point_raw.header.stamp.toSec();
             T_map_last = T_map;
@@ -63,11 +71,13 @@ void LiDAR_matching_lib::process() {
             ROS_WARN("No matching IMU");
         }
     }
-    saveProcessTime("4. Total Time: ", processTime_total.toSec() - ros::Time::now().toSec());
-    if((processTime_total.toSec() - ros::Time::now().toSec())>0.1){
+
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms_total);
+    saveProcessTime("4. Total Time: ", duration.count()/1e9);
+    if((float)(duration.count()/1e9)>0.1){
         ROS_WARN("Time cost too high! ");
     }
-    std::cout << "Process Time: " << processTime_total.toSec() - ros::Time::now().toSec() << std::endl;
+    std::cout << "Process Time: " << duration.count()/1e9<< std::endl;
 }
 
 void LiDAR_matching_lib::LoadNormalMap(std::string map_path) {
@@ -274,25 +284,28 @@ void LiDAR_matching_lib::handleMessage() {
 
 void LiDAR_matching_lib::InputDownSample() {
     pcl::PointCloud<pcl::PointXYZI>::Ptr vlp_pcd_ds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-    for (int i = 0; i < vlp_pcd.size(); i = i + 1) {
+    vlp_ds_pcd.clear();
+    for (int i = 0; i < vlp_pcd.size(); i = i + 3) {
         pcl::PointXYZI point_xyzi;
         point_xyzi.x = vlp_pcd[i].x;
         point_xyzi.y = vlp_pcd[i].y;
         point_xyzi.z = vlp_pcd[i].z;
         point_xyzi.intensity = vlp_pcd[i].time;
-        vlp_pcd_ds_ptr->push_back(point_xyzi);
+        if (sqrt(vlp_pcd[i].x * vlp_pcd[i].x + vlp_pcd[i].y * vlp_pcd[i].y +vlp_pcd[i].z * vlp_pcd[i].z) < 50) {
+            vlp_pcd_ds_ptr->push_back(point_xyzi);
+        }
     }
-  /*  US.setInputCloud(vlp_pcd_ds_ptr);
-    US.setRadiusSearch(2.0f);
-    US.filter(vlp_ds_pcd);*/
+    RS.setInputCloud(vlp_pcd_ds_ptr);
+    RS.setSample(500);
+    RS.filter(vlp_ds_pcd);
 /*    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor1;
     sor1.setInputCloud(vlp_pcd_ds_ptr);
     sor1.setMeanK(5);
     sor1.setStddevMulThresh(1.0);
     sor1.filter(*vlp_pcd_ds_ptr);*/
-    sor.setInputCloud(vlp_pcd_ds_ptr);
+/*    sor.setInputCloud(vlp_pcd_ds_ptr);
     sor.setLeafSize(3, 3, 3);
-    sor.filter(vlp_ds_pcd);
+    sor.filter(vlp_ds_pcd);*/
 }
 
 void LiDAR_matching_lib::findRotation(double pointTime, Eigen::Quaterniond &Q) {
@@ -314,8 +327,9 @@ void LiDAR_matching_lib::findRotation(double pointTime, Eigen::Quaterniond &Q) {
 
 
 void LiDAR_matching_lib::genLocalMap() {
-    ros::Time processTime;
-    processTime = ros::Time::now();
+    auto _now_ms = std::chrono::high_resolution_clock ::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms);
+
     Eigen::Affine3d curr_pose;
     curr_pose = T_map;
 
@@ -346,25 +360,34 @@ void LiDAR_matching_lib::genLocalMap() {
         temp.x = point.x();
         temp.y = point.y();
         temp.z = point.z();
+        kdtree.nearestKSearch(temp, 20, indices, distances);
         //kdtree.nearestKSearch(temp, 3.0 * ceil(vlp_pcd_range[i].intensity), indices, distances);
-        kdtree.radiusSearch(temp, 1, indices, distances);
+        //kdtree.radiusSearch(temp, 0.75, indices, distances);
         for (int j = 0; j < indices.size(); ++j) {
-            indices_unique.push_back(indices[j]);
+            if(distances[j]<0.7){
+                indices_unique.push_back(indices[j]);
+            }
         }
     }
-    saveProcessTime("2.1 Kdtree Time: ", processTime.toSec() - ros::Time::now().toSec());
-    processTime = ros::Time::now();
+    saveProcessTime("2.1 Kdtree Time: ", duration.count()/1e9);
+    _now_ms = std::chrono::high_resolution_clock ::now();
 //    for (int i = 0; i <indices_last.size() ; ++i) {
 //        indices_unique.push_back(indices_last[i]);
 //    }
     std::sort(indices_unique.begin(), indices_unique.end());
     indices_unique.erase(std::unique(indices_unique.begin(), indices_unique.end()), indices_unique.end());
+    pcl::PointCloud<pcl::PointNormal>::Ptr local_candidate(new pcl::PointCloud<pcl::PointNormal> );
     for (int j = 0; j < indices_unique.size(); ++j) {
-        LocalMap.push_back(mls_points[indices_unique[j]]);
+        local_candidate->push_back(mls_points[indices_unique[j]]);
     }
+    RS2.setInputCloud(local_candidate);
+    RS2.setSample(7200);
+    RS2.setSample(7200);
+    RS2.filter(LocalMap);
     indices_last = indices_unique;
-    saveProcessTime("2.2 from indices find map Time: ", processTime.toSec() - ros::Time::now().toSec());
-    processTime = ros::Time::now();
+    duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - _now_ms);
+    saveProcessTime("2.2 from indices find map Time: ", duration.count()/1e9);
+    _now_ms = std::chrono::high_resolution_clock ::now();
 }
 
 void LiDAR_matching_lib::AccumulateImu() {
