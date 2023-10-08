@@ -25,6 +25,25 @@ void InitPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& 
     LM.IMU_q.push_back( q  );//todo clear
     LM.IMU_Time.push_back(msg->header.stamp.toSec());
 }
+void ImuPoseCallback(const nav_msgs::Odometry ::ConstPtr& msg){
+    Eigen::Quaterniond q;
+    Eigen::Vector3d t;
+    Eigen::Affine3d T;
+    LM.IMU_pose = *msg;
+    q.x() = LM.IMU_pose.pose.pose.orientation.x;
+    q.y() = LM.IMU_pose.pose.pose.orientation.y;
+    q.z() = LM.IMU_pose.pose.pose.orientation.z;
+    q.w() = LM.IMU_pose.pose.pose.orientation.w;
+    t = Eigen::Vector3d( LM.IMU_pose.pose.pose.position.x,LM.IMU_pose.pose.pose.position.y,LM.IMU_pose.pose.pose.position.z);
+    T.setIdentity();
+    T.rotate(q);
+    T.translation() = t;
+    LM.T_IMU_preintergration = T;
+    LM.PoseCnt++;
+    if(LM.PoseCnt>100){
+        LM.newPose = true;
+    }
+}
 void gtCallback(const nav_msgs::Odometry::ConstPtr& msg){
     LM.gt_path.header = msg->header;
     geometry_msgs::PoseStamped tmp;
@@ -38,11 +57,12 @@ int main(int argc, char** argv){
     std::cout<<argv[1]<<std::endl;
     LM.time_offset = std::atof(argv[1]);
     ros::NodeHandle nh("~");
-    LM.LoadNormalMap("/home/echo/bag/ds.pcd");
+    LM.LoadNormalMap("/home/echo/bag/city/ds.pcd");
     ROS_WARN("Map Finish");
     ros::Subscriber sub1 = nh.subscribe("/imu_data", 500, ImuCallback);
     ros::Subscriber sub2 = nh.subscribe("/velodyne_points", 5, PointCallback);
     ros::Subscriber sub3 = nh.subscribe("/initialpose", 1, InitPoseCallback);
+    ros::Subscriber sub5 = nh.subscribe("/IMU_Preintegration/IMU_intergration", 1, ImuPoseCallback);
     ros::Subscriber sub4 = nh.subscribe("/gt", 1, gtCallback);
     ros::Publisher map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 1);
     ros::Publisher LiDAR_pub = nh.advertise<sensor_msgs::PointCloud2>("/LiDAR_map_Distortion", 1);
@@ -63,7 +83,8 @@ int main(int argc, char** argv){
         LM.extrinsicRot(2,2) = 1;
         Eigen::Quaterniond q;
         //start
-        q.x() = -0.0383515320718; q.y() =0.0165229793638; q.z() = 0.543365836143; q.w() = 0.838456749916;
+        q.x() = 3.622718853875994682e-03; q.y() = -6.446913629770278931e-02; q.z() = 9.416124820709228516e-01; q.w() = 3.304492235183715820e-01;
+        //q.setIdentity();
         LM.T_map.rotate(q.matrix()) ;
         LM.T_map.translation()<<0,0,0;
 

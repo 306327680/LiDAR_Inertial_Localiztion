@@ -32,12 +32,13 @@ class IMU_preintergration_lib {
 public:
     IMU_preintergration_lib(){
         extTrans.setZero();
-        boost::shared_ptr<gtsam::PreintegrationParams> p = gtsam::PreintegrationParams::MakeSharedU(9.81);
+        boost::shared_ptr<gtsam::PreintegrationParams> p = gtsam::PreintegrationParams::MakeSharedU(9.8);
         p->accelerometerCovariance  = gtsam::Matrix33::Identity(3,3) * pow(1e-04, 2);       // acc white noise in continuous
         p->gyroscopeCovariance      = gtsam::Matrix33::Identity(3,3) * pow(1e-05  , 2);     // gyro white noise in continuous
         p->integrationCovariance    = gtsam::Matrix33::Identity(3,3) * pow(5e-5, 2);        // error committed in integrating position from velocities
-        gtsam::imuBias::ConstantBias prior_imu_bias((gtsam::Vector(6) << -0.0172629, 0.00221303, -0.00185318, 0.000478473, 0.000513444, 0.000380275).finished()); // assume zero initial bias
-        priorPoseNoise  = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 5e-1, 5e-1, 5e-1, 5e-1, 5e-1, 5e-1).finished()); // rad,rad,rad,m, m, m
+        gtsam::imuBias::ConstantBias prior_imu_bias((gtsam::Vector(6) << 0,  0, 0, 0, 0, 0).finished()); // assume zero initial bias
+        // gtsam::imuBias::ConstantBias prior_imu_bias((gtsam::Vector(6) << -0.0172629, 0.00221303, -0.00185318, 0.000478473, 0.000513444, 0.000380275).finished()); // assume zero initial bias
+        priorPoseNoise  = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 5e-1, 5e-1, 5e-1, 3e-1, 3e-1, 3e-1).finished()); // rad,rad,rad,m, m, m
         priorVelNoise   = gtsam::noiseModel::Isotropic::Sigma(3, 1e3); // m/s
         priorBiasNoise  = gtsam::noiseModel::Isotropic::Sigma(6, 1e-3); // 1e-2 ~ 1e-3 seems to be good
         correctionNoise = gtsam::noiseModel::Diagonal::Sigmas((gtsam::Vector(6) << 0.02, 0.02, 0.02, 0.05, 0.05, 0.05).finished()); // rad,rad,rad,m, m, m

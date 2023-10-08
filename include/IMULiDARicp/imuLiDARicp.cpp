@@ -173,7 +173,6 @@ void ICPSimulation::pointPlane(pcl::PointCloud<pcl::PointXYZI> cloud, Eigen::Mat
             if (res_dis.front() > max_coresspoind_dis)
                 continue;
             Eigen::Vector3d nearest_pt = Eigen::Vector3d(target_normal_ptr->at(indices.front()).x,target_normal_ptr->at(indices.front()).y,target_normal_ptr->at(indices.front()).z);
-
             Eigen::Vector3d pt_normal = Eigen::Vector3d(target_normal_ptr->at(indices.front()).normal_x,target_normal_ptr->at(indices.front()).normal_y,target_normal_ptr->at(indices.front()).normal_z);
             Eigen::Vector3d source_pt(cloud[i].x, cloud[i].y, cloud[i].z);
             ceres::CostFunction *cost_function = LidarPlaneFactor::Create(source_pt, nearest_pt, pt_normal, 1);

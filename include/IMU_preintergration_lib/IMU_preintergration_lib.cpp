@@ -137,7 +137,7 @@ void IMU_preintergration_lib::integrateIMU() {
 //            double dt = (lastImuT_opt < 0) ? (1.0 / 500.0) : (IMU_buffer[j].header.stamp.toSec() - lastImuT_opt);
             imuIntegratorOpt_->integrateMeasurement(
                     gtsam::Vector3(IMU_buffer[j].linear_acceleration.x, IMU_buffer[j].linear_acceleration.y, IMU_buffer[j].linear_acceleration.z),
-                    gtsam::Vector3(IMU_buffer[j].angular_velocity.x,    IMU_buffer[j].angular_velocity.y,    IMU_buffer[j].angular_velocity.z), 0.005);
+                    gtsam::Vector3(IMU_buffer[j].angular_velocity.x,    IMU_buffer[j].angular_velocity.y,    IMU_buffer[j].angular_velocity.z), 0.0025);
             lastImuT_opt = IMU_buffer[j].header.stamp.toSec();
         }else{
             std::vector<sensor_msgs::Imu>  IMU_q_tmp(IMU_buffer.begin() + j,IMU_buffer.end());
@@ -230,7 +230,7 @@ void IMU_preintergration_lib::repropagateIMU() {
             sensor_msgs::Imu *thisImu = &repropagateIMU_buffer[i];
             double imuTime =repropagateIMU_buffer[i].header.stamp.toSec();
             imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu->linear_acceleration.x, thisImu->linear_acceleration.y, thisImu->linear_acceleration.z),
-                                                    gtsam::Vector3(thisImu->angular_velocity.x,    thisImu->angular_velocity.y,    thisImu->angular_velocity.z), 0.005);
+                                                    gtsam::Vector3(thisImu->angular_velocity.x,    thisImu->angular_velocity.y,    thisImu->angular_velocity.z), 0.0025);
             lastImuQT = imuTime;
         }
     }
@@ -244,7 +244,7 @@ void IMU_preintergration_lib::generatePublishmsg() {
     imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(IMU_buffer.back().linear_acceleration.x,
                                                            IMU_buffer.back().linear_acceleration.y, IMU_buffer.back().linear_acceleration.z),
                                             gtsam::Vector3(IMU_buffer.back().angular_velocity.x,
-                                                           IMU_buffer.back().angular_velocity.y,    IMU_buffer.back().angular_velocity.z), 0.005);
+                                                           IMU_buffer.back().angular_velocity.y,    IMU_buffer.back().angular_velocity.z), 0.0025);
     // predict odometry
     gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
     gtsam::Pose3 imuPose = gtsam::Pose3(currentState.quaternion(), currentState.position());
@@ -278,7 +278,7 @@ void IMU_preintergration_lib::IMUintergation(sensor_msgs::Imu thisImu) {
     if(systemInitialized){
         // integrate this single imu message
         imuIntegratorImu_->integrateMeasurement(gtsam::Vector3(thisImu.linear_acceleration.x, thisImu.linear_acceleration.y, thisImu.linear_acceleration.z),
-                                                gtsam::Vector3(thisImu.angular_velocity.x,    thisImu.angular_velocity.y,    thisImu.angular_velocity.z), 0.005);
+                                                gtsam::Vector3(thisImu.angular_velocity.x,    thisImu.angular_velocity.y,    thisImu.angular_velocity.z), 0.0025);
         // predict odometry
         gtsam::NavState currentState = imuIntegratorImu_->predict(prevStateOdom, prevBiasOdom);
         // publish odometry

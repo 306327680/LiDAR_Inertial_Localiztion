@@ -21,10 +21,14 @@ void lidarOdometryHandler(const nav_msgs::Odometry::ConstPtr& msg){
 }
 void imuOdometryHandler(const sensor_msgs::Imu::ConstPtr& msg){
     sensor_msgs::Imu msg_t = *msg;
-    msg_t.angular_velocity.x = -msg_t.angular_velocity.x;
+    msg_t.angular_velocity.x =  msg->angular_velocity.y;
+    msg_t.angular_velocity.y = -msg->angular_velocity.x;
+    msg_t.linear_acceleration.x = msg->linear_acceleration.y ;
+    msg_t.linear_acceleration.y = -msg->linear_acceleration.x ;
+/*    msg_t.angular_velocity.x = -msg_t.angular_velocity.x;
     msg_t.angular_velocity.z = -msg_t.angular_velocity.z;
     msg_t.linear_acceleration.x = -msg_t.linear_acceleration.x ;
-    msg_t.linear_acceleration.z = -msg_t.linear_acceleration.z ;
+    msg_t.linear_acceleration.z = -msg_t.linear_acceleration.z ;*/
 
     IP.IMU_buffer.push_back(msg_t);
     IP.repropagateIMU_buffer.push_back(msg_t);

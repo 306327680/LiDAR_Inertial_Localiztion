@@ -36,10 +36,13 @@ public:
     //1.Input
 //    sensor_msgs::PointCloud2 Point_raw;
     sensor_msgs::PointCloud2 Point_raw;
+    nav_msgs::Odometry IMU_pose;
     bool InitPoseBool = false;
     bool InitPoseCome = false;
     bool newIMU = false;
     bool newLiDAR = false;
+    bool newPose = false;
+    int PoseCnt = 0;
     std::vector<sensor_msgs::Imu> ImuQueue;
     std::vector<double> IMU_Time;
     std::vector<Eigen::Quaterniond> IMU_q;
@@ -64,6 +67,7 @@ public:
     sensor_msgs::PointCloud2 mls_map;
     //3.Variables
     pcl::PointCloud<pcl::PointNormal> mls_points;
+    Eigen::Affine3d T_IMU_preintergration;
     Eigen::Affine3d T_map;
     Eigen::Affine3d T_IMU_predict;
     Eigen::Affine3d T_map_last;
@@ -86,7 +90,7 @@ private:
     void saveProcessTime(std::string name, double value);
     bool imuReady = false;
    //1. params
-    float IMU_period_time = 0.005;
+    float IMU_period_time = 0.0025;
     Eigen::Vector3d gyro_last;
     Eigen::Quaterniond IMU_predict_q;
     pcl::KdTreeFLANN<pcl::PointNormal> kdtree;

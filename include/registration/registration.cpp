@@ -121,9 +121,9 @@ void registration::icp(pcl::PointCloud<pcl::PointXYZI>::Ptr source, pcl::PointCl
 
     //ICPSimulation ICP_IMU(*target_);
     ICPSimulation ICP_IMU(target);
-    ICP_IMU.max_iterations = 15;
-    ICP_IMU.max_coresspoind_dis = 0.75;
-    ICP_IMU.trans_eps = 0.00001;
+    ICP_IMU.max_iterations = 25;
+    ICP_IMU.max_coresspoind_dis = 0.3;
+    ICP_IMU.trans_eps = 0.0005;
     //ICP_IMU.start(*source, T, T);
     ICP_IMU.pointPlane(*source,T, T);
     covariance_matrix = ICP_IMU.covariance_matrix;

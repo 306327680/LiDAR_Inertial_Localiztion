@@ -159,13 +159,17 @@ void LiDAR_matching_lib::ImuDistortion(double first_point_time, double last_poin
             findTrans(LastFrameTime + time_offset , p_last);
             T_IMU_predict.setIdentity();
             T_IMU_predict.rotate( q_init.matrix());
-            T_IMU_predict.rotate( q_init.matrix());
+           // T_IMU_predict.rotate( q_init.matrix());
             T_IMU_predict.translate(q_last.matrix().inverse()*(p_init-p_last));
             T_map = T_map.rotate( q_init.matrix());
             T_map = T_map.rotate( q_last.matrix().inverse());
 //            T_map = T_map.translate(Eigen::Vector3d (icp.increase(0,3),icp.increase(1,3),icp.increase(2,3)));
             T_map = T_map.translate(q_last.matrix().inverse() * (p_init-p_last));
             //T_map.translation() = p_init;//use imu positiom not work;
+        }
+        if(newPose){
+            T_IMU_predict=T_IMU_preintergration;
+            T_map = T_IMU_preintergration;
         }
         IMU_pose_latest.setIdentity();
         IMU_pose_latest.rotate(T_map.rotation());
@@ -291,12 +295,12 @@ void LiDAR_matching_lib::InputDownSample() {
         point_xyzi.y = vlp_pcd[i].y;
         point_xyzi.z = vlp_pcd[i].z;
         point_xyzi.intensity = vlp_pcd[i].time;
-        if (sqrt(vlp_pcd[i].x * vlp_pcd[i].x + vlp_pcd[i].y * vlp_pcd[i].y +vlp_pcd[i].z * vlp_pcd[i].z) < 50) {
+        if (sqrt(vlp_pcd[i].x * vlp_pcd[i].x + vlp_pcd[i].y * vlp_pcd[i].y +vlp_pcd[i].z * vlp_pcd[i].z) < 40) {
             vlp_pcd_ds_ptr->push_back(point_xyzi);
         }
     }
     RS.setInputCloud(vlp_pcd_ds_ptr);
-    RS.setSample(500);
+    RS.setSample(1000);
     RS.filter(vlp_ds_pcd);
 /*    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor1;
     sor1.setInputCloud(vlp_pcd_ds_ptr);

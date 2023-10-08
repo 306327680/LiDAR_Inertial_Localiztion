@@ -3,7 +3,7 @@
     <arg name="project" default="LiDAR_Inertia_Localiztion"/>
 
 
-    <node pkg="$(arg project)" type="LiDAR_matching" name="LiDAR_matching" output="screen" args="0.0375">
+    <node pkg="$(arg project)" type="LiDAR_matching" name="LiDAR_matching" output="screen" args="0.05">
 <!--        <remap from="/velodyne_points" to="/livox/lidar"/>-->
        <remap from="/imu_data" to="/IMU_Preintegration/Imu_corrected"/>
     </node>
